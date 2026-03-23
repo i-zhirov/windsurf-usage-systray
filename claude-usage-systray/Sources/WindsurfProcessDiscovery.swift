@@ -3,6 +3,11 @@ import Foundation
 final class WindsurfProcessDiscovery {
     typealias CommandRunner = (String, [String]) throws -> String
 
+    private struct ProcessContext {
+        let processIdentifier: Int32
+        let command: String
+    }
+
     private let supportedLanguageServerNames = [
         "language_server_macos_arm",
         "language_server_macos_x64"
@@ -17,23 +22,28 @@ final class WindsurfProcessDiscovery {
     }
 
     func discover() throws -> WindsurfLiveDiscovery {
-        let processIdentifier = try languageServerProcessIdentifier()
-        let environment = try processEnvironment(processIdentifier: processIdentifier)
-        let rpcPort = try localRPCPort(processIdentifier: processIdentifier)
+        let processContext = try languageServerProcessContext()
+        let environment = try processEnvironment(processIdentifier: processContext.processIdentifier)
+        let extensionServerPort = extensionServerPort(from: processContext.command)
+        let rpcPort = try localRPCPort(
+            processIdentifier: processContext.processIdentifier,
+            extensionServerPort: extensionServerPort
+        )
 
         guard let csrfToken = environment["WINDSURF_CSRF_TOKEN"], !csrfToken.isEmpty else {
             throw WindsurfFetchError.liveDiscoveryFailed("Missing WINDSURF_CSRF_TOKEN")
         }
 
         return WindsurfLiveDiscovery(
-            processIdentifier: processIdentifier,
+            processIdentifier: processContext.processIdentifier,
             rpcPort: rpcPort,
             csrfToken: csrfToken
         )
     }
 
-    private func languageServerProcessIdentifier() throws -> Int32 {
+    private func languageServerProcessContext() throws -> ProcessContext {
         let output = try commandRunner("/bin/ps", ["-axo", "pid=,command="])
+        var candidates: [ProcessContext] = []
 
         for line in output.split(separator: "\n") {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
@@ -41,7 +51,11 @@ final class WindsurfProcessDiscovery {
 
             let parts = trimmed.split(maxSplits: 1, whereSeparator: { $0.isWhitespace })
             guard let pidString = parts.first, let pid = Int32(pidString) else { continue }
-            return pid
+            candidates.append(ProcessContext(processIdentifier: pid, command: trimmed))
+        }
+
+        if let bestCandidate = candidates.max(by: { $0.processIdentifier < $1.processIdentifier }) {
+            return bestCandidate
         }
 
         throw WindsurfFetchError.liveDiscoveryFailed("Windsurf language server is not running")
@@ -69,7 +83,7 @@ final class WindsurfProcessDiscovery {
         return environment
     }
 
-    private func localRPCPort(processIdentifier: Int32) throws -> Int {
+    private func localRPCPort(processIdentifier: Int32, extensionServerPort: Int?) throws -> Int {
         let output = try commandRunner("/usr/sbin/lsof", ["-nP", "-a", "-p", String(processIdentifier), "-iTCP"])
 
         var listenPorts: [Int] = []
@@ -80,11 +94,31 @@ final class WindsurfProcessDiscovery {
             listenPorts.append(port)
         }
 
-        guard let rpcPort = listenPorts.min() else {
+        guard !listenPorts.isEmpty else {
             throw WindsurfFetchError.liveDiscoveryFailed("Unable to find Windsurf local RPC port")
         }
 
-        return rpcPort
+        let candidatePorts = listenPorts
+            .filter { port in
+                guard let extensionServerPort else { return true }
+                return port != extensionServerPort
+            }
+            .sorted()
+
+        if let extensionServerPort,
+           let preferredPort = candidatePorts.first(where: { $0 > extensionServerPort }) {
+            return preferredPort
+        }
+
+        if let preferredPort = candidatePorts.first {
+            return preferredPort
+        }
+
+        if let fallbackPort = listenPorts.sorted().first {
+            return fallbackPort
+        }
+
+        throw WindsurfFetchError.liveDiscoveryFailed("Unable to determine Windsurf local RPC port")
     }
 
     private func parsePort(from line: String) -> Int? {
@@ -92,6 +126,15 @@ final class WindsurfProcessDiscovery {
         let suffix = line[localhostRange.upperBound...]
         let digits = suffix.prefix { $0.isNumber }
         return Int(digits)
+    }
+
+    private func extensionServerPort(from command: String) -> Int? {
+        let components = command.split(separator: " ")
+        guard let index = components.firstIndex(of: "--extension_server_port"), index < components.index(before: components.endIndex) else {
+            return nil
+        }
+
+        return Int(components[components.index(after: index)])
     }
 
     private static func defaultRunCommand(processInfo: ProcessInfo) -> CommandRunner {

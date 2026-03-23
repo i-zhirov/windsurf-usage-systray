@@ -78,7 +78,7 @@ final class WindsurfPlanStatusTests: XCTestCase {
 final class WindsurfProcessDiscoveryTests: XCTestCase {
 
     func testDiscoverSupportsAppleSiliconLanguageServerName() throws {
-        let discovery = makeDiscovery(processLine: "123 /Applications/Windsurf.app/.../language_server_macos_arm --run_child")
+        let discovery = makeDiscovery(processLine: "123 /Applications/Windsurf.app/.../language_server_macos_arm --run_child --extension_server_port 56427")
 
         let result = try discovery.discover()
 
@@ -88,7 +88,7 @@ final class WindsurfProcessDiscoveryTests: XCTestCase {
     }
 
     func testDiscoverSupportsIntelLanguageServerName() throws {
-        let discovery = makeDiscovery(processLine: "456 /Applications/Windsurf.app/.../language_server_macos_x64 --run_child")
+        let discovery = makeDiscovery(processLine: "456 /Applications/Windsurf.app/.../language_server_macos_x64 --run_child --extension_server_port 56427")
 
         let result = try discovery.discover()
 
@@ -105,7 +105,42 @@ final class WindsurfProcessDiscoveryTests: XCTestCase {
         XCTAssertEqual(result.processIdentifier, 789)
     }
 
-    private func makeDiscovery(processLine: String) -> WindsurfProcessDiscovery {
+    func testDiscoverPrefersNewestMatchingLanguageServerProcess() throws {
+        let discovery = WindsurfProcessDiscovery(commandRunner: { command, arguments in
+            if command == "/bin/ps", arguments == ["-axo", "pid=,command="] {
+                return "123 /Applications/Windsurf.app/.../language_server_macos_arm --run_child --extension_server_port 56427\n456 /Applications/Windsurf.app/.../language_server_macos_x64 --run_child --extension_server_port 56437\n"
+            }
+
+            if command == "/bin/ps", arguments == ["eww", "-p", "456"] {
+                return "456 /Applications/Windsurf.app/.../language_server_macos_x64 --run_child --extension_server_port 56437 WINDSURF_CSRF_TOKEN=token-456 PATH=/usr/bin\n"
+            }
+
+            if command == "/usr/sbin/lsof", arguments == ["-nP", "-a", "-p", "456", "-iTCP"] {
+                return "COMMAND PID USER FD TYPE DEVICE SIZE/OFF NODE NAME\nls 456 me 8u IPv4 0t0 TCP 127.0.0.1:56437 (LISTEN)\nls 456 me 9u IPv4 0t0 TCP 127.0.0.1:56441 (LISTEN)\n"
+            }
+
+            XCTFail("Unexpected command: \(command) \(arguments)")
+            return ""
+        })
+
+        let result = try discovery.discover()
+
+        XCTAssertEqual(result.processIdentifier, 456)
+        XCTAssertEqual(result.rpcPort, 56441)
+    }
+
+    func testDiscoverAvoidsExtensionServerPortWhenChoosingRPCPort() throws {
+        let discovery = makeDiscovery(
+            processLine: "123 /Applications/Windsurf.app/.../language_server_macos_arm --run_child --extension_server_port 56427",
+            listeningPorts: [56427, 56429, 56441]
+        )
+
+        let result = try discovery.discover()
+
+        XCTAssertEqual(result.rpcPort, 56429)
+    }
+
+    private func makeDiscovery(processLine: String, listeningPorts: [Int] = [56429, 56441]) -> WindsurfProcessDiscovery {
         WindsurfProcessDiscovery(commandRunner: { command, arguments in
             if command == "/bin/ps", arguments == ["-axo", "pid=,command="] {
                 return processLine + "\n"
@@ -116,7 +151,10 @@ final class WindsurfProcessDiscoveryTests: XCTestCase {
             }
 
             if command == "/usr/sbin/lsof", arguments == ["-nP", "-a", "-p", processIdentifier(from: processLine), "-iTCP"] {
-                return "COMMAND PID USER FD TYPE DEVICE SIZE/OFF NODE NAME\nls \(processIdentifier(from: processLine)) me 8u IPv4 0t0 TCP 127.0.0.1:56429 (LISTEN)\nls \(processIdentifier(from: processLine)) me 9u IPv4 0t0 TCP 127.0.0.1:56441 (LISTEN)\n"
+                let lines = listeningPorts.enumerated().map { index, port in
+                    "ls \(processIdentifier(from: processLine)) me \(index + 8)u IPv4 0t0 TCP 127.0.0.1:\(port) (LISTEN)"
+                }.joined(separator: "\n")
+                return "COMMAND PID USER FD TYPE DEVICE SIZE/OFF NODE NAME\n\(lines)\n"
             }
 
             XCTFail("Unexpected command: \(command) \(arguments)")
