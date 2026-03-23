@@ -1,93 +1,126 @@
 import XCTest
 @testable import ClaudeUsageSystray
 
-// MARK: - OAuthUsageResponse decoding
+final class WindsurfProtobufReaderTests: XCTestCase {
 
-final class OAuthUsageResponseTests: XCTestCase {
+    func testDecodeUserStatusExtractsQuotaFields() throws {
+        let data = protobufMessage([
+            .message(13, protobufMessage([
+                .message(1, protobufMessage([
+                    .string(2, "Teams"),
+                    .varint(35, 2)
+                ])),
+                .varint(14, 88),
+                .varint(15, 49),
+                .varint(17, 1_710_000_000),
+                .varint(18, 1_710_500_000)
+            ]))
+        ])
 
-    func testDecodesFullResponse() throws {
-        let json = """
-        {
-          "five_hour":   { "utilization": 35.0, "resets_at": "2026-03-19T19:00:00.367134+00:00" },
-          "seven_day":   { "utilization": 71.0, "resets_at": "2026-03-20T11:00:00.367161+00:00" },
-          "seven_day_sonnet": { "utilization": 27.0, "resets_at": "2026-03-20T12:00:00.367175+00:00" },
-          "seven_day_oauth_apps": null,
-          "seven_day_opus": null,
-          "seven_day_cowork": null,
-          "iguana_necktie": null,
-          "extra_usage": { "is_enabled": false, "monthly_limit": null, "used_credits": null, "utilization": null }
-        }
-        """.data(using: .utf8)!
+        let status = try WindsurfProtobufReader().decodeUserStatus(data)
 
-        let response = try JSONDecoder().decode(OAuthUsageResponse.self, from: json)
-
-        XCTAssertEqual(response.fiveHour?.utilization, 35.0)
-        XCTAssertEqual(response.sevenDay?.utilization, 71.0)
-        XCTAssertEqual(response.sevenDaySonnet?.utilization, 27.0)
+        XCTAssertEqual(status.dailyQuotaRemainingPercent, 88)
+        XCTAssertEqual(status.weeklyQuotaRemainingPercent, 49)
+        XCTAssertEqual(status.dailyQuotaResetAtUnix, 1_710_000_000)
+        XCTAssertEqual(status.weeklyQuotaResetAtUnix, 1_710_500_000)
+        XCTAssertEqual(status.planName, "Teams")
+        XCTAssertEqual(status.billingStrategy, 2)
     }
 
-    func testDecodesNullSonnet() throws {
-        let json = """
-        {
-          "five_hour":   { "utilization": 10.0, "resets_at": "2026-03-19T19:00:00+00:00" },
-          "seven_day":   { "utilization": 20.0, "resets_at": "2026-03-20T11:00:00+00:00" },
-          "seven_day_sonnet": null
+    func testDecodeUserStatusRequiresQuotaFields() {
+        let data = protobufMessage([
+            .message(13, protobufMessage([
+                .message(1, protobufMessage([
+                    .string(2, "Teams")
+                ]))
+            ]))
+        ])
+
+        XCTAssertThrowsError(try WindsurfProtobufReader().decodeUserStatus(data)) { error in
+            guard case WindsurfFetchError.invalidCachedUserStatus = error else {
+                return XCTFail("Unexpected error: \(error)")
+            }
         }
-        """.data(using: .utf8)!
-
-        let response = try JSONDecoder().decode(OAuthUsageResponse.self, from: json)
-
-        XCTAssertNil(response.sevenDaySonnet)
-        XCTAssertEqual(response.fiveHour?.utilization, 10.0)
-    }
-
-    func testDecodesAllNulls() throws {
-        let json = """
-        {
-          "five_hour": null,
-          "seven_day": null,
-          "seven_day_sonnet": null
-        }
-        """.data(using: .utf8)!
-
-        let response = try JSONDecoder().decode(OAuthUsageResponse.self, from: json)
-
-        XCTAssertNil(response.fiveHour)
-        XCTAssertNil(response.sevenDay)
-        XCTAssertNil(response.sevenDaySonnet)
-    }
-
-    func testResetsAtDateParsesWithFractionalSeconds() throws {
-        let json = """
-        {
-          "five_hour": { "utilization": 35.0, "resets_at": "2026-03-19T19:00:00.367134+00:00" },
-          "seven_day": null, "seven_day_sonnet": null
-        }
-        """.data(using: .utf8)!
-
-        let response = try JSONDecoder().decode(OAuthUsageResponse.self, from: json)
-        XCTAssertNotNil(response.fiveHour?.resetsAtDate, "resetsAt date should parse successfully")
-    }
-
-    func testUtilizationConvertsToInt() throws {
-        let json = """
-        {
-          "five_hour":   { "utilization": 34.7, "resets_at": "2026-03-19T19:00:00+00:00" },
-          "seven_day":   { "utilization": 71.2, "resets_at": "2026-03-20T11:00:00+00:00" },
-          "seven_day_sonnet": { "utilization": 26.9, "resets_at": "2026-03-20T12:00:00+00:00" }
-        }
-        """.data(using: .utf8)!
-
-        let response = try JSONDecoder().decode(OAuthUsageResponse.self, from: json)
-
-        // Int() truncates (floors), matching how snapshot builds utilization
-        XCTAssertEqual(Int(response.fiveHour!.utilization), 34)
-        XCTAssertEqual(Int(response.sevenDay!.utilization), 71)
-        XCTAssertEqual(Int(response.sevenDaySonnet!.utilization), 26)
     }
 }
 
-// MARK: - calculateUtilization
+final class WindsurfPlanStatusTests: XCTestCase {
+
+    func testMakeSnapshotMapsFieldsForQuotaDisplay() {
+        let status = WindsurfPlanStatus(
+            dailyQuotaRemainingPercent: 91,
+            weeklyQuotaRemainingPercent: 64,
+            dailyQuotaResetAtUnix: 1_710_000_000,
+            weeklyQuotaResetAtUnix: 1_710_500_000,
+            planName: "Pro",
+            billingStrategy: 2
+        )
+
+        let snapshot = status.makeSnapshot(
+            source: .live,
+            lastUpdated: Date(timeIntervalSince1970: 1_700_000_000),
+            isStale: false,
+            errorHint: nil
+        )
+
+        XCTAssertEqual(snapshot.dailyQuotaRemainingPercent, 91)
+        XCTAssertEqual(snapshot.weeklyQuotaRemainingPercent, 64)
+        XCTAssertEqual(snapshot.dailyQuotaUsedPercent, 9)
+        XCTAssertEqual(snapshot.weeklyQuotaUsedPercent, 36)
+        XCTAssertEqual(snapshot.planName, "Pro")
+        XCTAssertEqual(snapshot.billingStrategy, "BILLING_STRATEGY_QUOTA")
+        XCTAssertEqual(snapshot.source, .live)
+        XCTAssertFalse(snapshot.isStale)
+        XCTAssertEqual(snapshot.sourceLabelText, "Live")
+    }
+}
+
+final class UsageSnapshotFormattingTests: XCTestCase {
+
+    func testCompactMenuBarFormattingUsesDailyAndWeeklyQuota() {
+        let snapshot = UsageSnapshot(
+            dailyQuotaRemainingPercent: 88,
+            weeklyQuotaRemainingPercent: 49,
+            dailyResetAt: Date().addingTimeInterval(-10),
+            weeklyResetAt: Date().addingTimeInterval(-10),
+            planName: "Teams",
+            billingStrategy: "BILLING_STRATEGY_QUOTA",
+            source: .cache,
+            lastUpdated: Date(),
+            isStale: true,
+            errorHint: "Showing cached Windsurf data"
+        )
+
+        XCTAssertEqual(snapshot.compactMenuBarText, "D88 · W49")
+        XCTAssertEqual(snapshot.menuBarPrimaryText, "D: 88%")
+        XCTAssertEqual(snapshot.menuBarSecondaryText, "W: 49%")
+        XCTAssertEqual(snapshot.displayText, "49%")
+        XCTAssertEqual(snapshot.sourceLabelText, "Cached")
+        XCTAssertEqual(snapshot.dailyResetIn, "now")
+        XCTAssertEqual(snapshot.weeklyResetIn, "now")
+        XCTAssertEqual(snapshot.errorHint, "Showing cached Windsurf data")
+    }
+
+    func testLegacyInitializerMapsUsedPercentBackToRemainingPercent() {
+        let snapshot = UsageSnapshot(
+            fiveHourUtilization: 12,
+            sevenDayUtilization: 51,
+            sevenDaySonnetUtilization: nil,
+            fiveHourResetIn: nil,
+            sevenDayResetIn: nil,
+            lastUpdated: Date(timeIntervalSince1970: 1_700_000_000),
+            weeklySessions: 0,
+            weeklyMessages: 0,
+            weeklyTokens: 0
+        )
+
+        XCTAssertEqual(snapshot.dailyQuotaRemainingPercent, 88)
+        XCTAssertEqual(snapshot.weeklyQuotaRemainingPercent, 49)
+        XCTAssertEqual(snapshot.fiveHourUtilization, 12)
+        XCTAssertEqual(snapshot.sevenDayUtilization, 51)
+        XCTAssertEqual(snapshot.source, .unavailable)
+    }
+}
 
 final class CalculateUtilizationTests: XCTestCase {
 
@@ -116,8 +149,6 @@ final class CalculateUtilizationTests: XCTestCase {
     }
 }
 
-// MARK: - formatTimeRemaining
-
 final class FormatTimeRemainingTests: XCTestCase {
 
     func testPastDateReturnsNow() {
@@ -139,4 +170,49 @@ final class FormatTimeRemainingTests: XCTestCase {
         let now = Date()
         XCTAssertEqual(formatTimeRemaining(until: now.addingTimeInterval(3600), from: now), "1h 0m")
     }
+}
+
+private enum ProtobufField {
+    case varint(Int, UInt64)
+    case string(Int, String)
+    case message(Int, Data)
+}
+
+private func protobufMessage(_ fields: [ProtobufField]) -> Data {
+    var data = Data()
+
+    for field in fields {
+        switch field {
+        case .varint(let number, let value):
+            data.append(varint(UInt64(number << 3)))
+            data.append(varint(value))
+        case .string(let number, let value):
+            let stringData = Data(value.utf8)
+            data.append(varint(UInt64((number << 3) | 2)))
+            data.append(varint(UInt64(stringData.count)))
+            data.append(stringData)
+        case .message(let number, let nestedData):
+            data.append(varint(UInt64((number << 3) | 2)))
+            data.append(varint(UInt64(nestedData.count)))
+            data.append(nestedData)
+        }
+    }
+
+    return data
+}
+
+private func varint(_ value: UInt64) -> Data {
+    var remaining = value
+    var bytes: [UInt8] = []
+
+    repeat {
+        var byte = UInt8(remaining & 0x7f)
+        remaining >>= 7
+        if remaining > 0 {
+            byte |= 0x80
+        }
+        bytes.append(byte)
+    } while remaining > 0
+
+    return Data(bytes)
 }
