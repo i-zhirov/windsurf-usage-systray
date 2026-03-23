@@ -63,7 +63,8 @@ Toggle **Compact display** in Settings to switch between:
 ```bash
 git clone https://github.com/i-zhirov/claude-usage-systray
 cd claude-usage-systray/claude-usage-systray
-xcodebuild -project WindsurfUsageSystray.xcodeproj -scheme WindsurfUsageSystray -configuration Release build
+xcodebuild -project WindsurfUsageSystray.xcodeproj -scheme WindsurfUsageSystray -configuration Release \
+  -derivedDataPath /tmp/ws-build-dd build
 open ~/Library/Developer/Xcode/DerivedData/WindsurfUsageSystray-*/Build/Products/Release/WindsurfUsageSystray.app
 ```
 
@@ -74,6 +75,7 @@ Or open `WindsurfUsageSystray.xcodeproj` in Xcode and run with ⌘R.
 ```bash
 xcodebuild test -project WindsurfUsageSystray.xcodeproj \
   -scheme WindsurfUsageSystrayTests \
+  -derivedDataPath /tmp/ws-test-dd \
   -destination 'platform=macOS'
 ```
 
