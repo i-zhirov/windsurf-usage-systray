@@ -1,6 +1,11 @@
 import Foundation
 
 final class WindsurfProcessDiscovery {
+    private let supportedLanguageServerNames = [
+        "language_server_macos_arm",
+        "language_server_macos_x64"
+    ]
+
     private let processInfo: ProcessInfo
 
     init(processInfo: ProcessInfo = .processInfo) {
@@ -28,7 +33,7 @@ final class WindsurfProcessDiscovery {
 
         for line in output.split(separator: "\n") {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
-            guard trimmed.contains("language_server_macos_arm") else { continue }
+            guard isSupportedLanguageServerProcess(trimmed) else { continue }
 
             let parts = trimmed.split(maxSplits: 1, whereSeparator: { $0.isWhitespace })
             guard let pidString = parts.first, let pid = Int32(pidString) else { continue }
@@ -36,6 +41,11 @@ final class WindsurfProcessDiscovery {
         }
 
         throw WindsurfFetchError.liveDiscoveryFailed("Windsurf language server is not running")
+    }
+
+    private func isSupportedLanguageServerProcess(_ command: String) -> Bool {
+        supportedLanguageServerNames.contains { command.contains($0) }
+            || command.contains("language_server_macos_")
     }
 
     private func processEnvironment(processIdentifier: Int32) throws -> [String: String] {
