@@ -94,10 +94,10 @@ jobs:
             version \"$VERSION\"
             sha256 \"$SHA\"
 
-            url \"https://github.com/i-zhirov/claude-usage-systray/releases/download/v#{version}/WindsurfUsageSystray.zip\"
+            url \"https://github.com/i-zhirov/windsurf-usage-systray/releases/download/v#{version}/WindsurfUsageSystray.zip\"
             name \"Windsurf Usage Systray\"
             desc \"macOS menu bar app showing Windsurf quota in real time\"
-            homepage \"https://github.com/i-zhirov/claude-usage-systray\"
+            homepage \"https://github.com/i-zhirov/windsurf-usage-systray\"
 
             app \"WindsurfUsageSystray.app\"
 

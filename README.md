@@ -61,7 +61,7 @@ Toggle **Compact display** in Settings to switch between:
 ## Build from source
 
 ```bash
-git clone https://github.com/i-zhirov/claude-usage-systray
+git clone https://github.com/i-zhirov/windsurf-usage-systray
 cd claude-usage-systray/claude-usage-systray
 xcodebuild -project WindsurfUsageSystray.xcodeproj -scheme WindsurfUsageSystray -configuration Release \
   -derivedDataPath /tmp/ws-build-dd build
@@ -78,12 +78,6 @@ xcodebuild test -project WindsurfUsageSystray.xcodeproj \
   -derivedDataPath /tmp/ws-test-dd \
   -destination 'platform=macOS'
 ```
-
-## Status
-
-The app behavior is already Windsurf-oriented.
-
-The repository directory name is still historical, but the project, schemes, bundle identifiers, artifacts, and release metadata now use `WindsurfUsageSystray`.
 
 ## License
 
