@@ -58,7 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "chart.pie.fill", accessibilityDescription: "Claude Usage")
+            button.image = NSImage(systemSymbolName: "gauge.with.dots.needle.33percent", accessibilityDescription: "Windsurf Quota")
             button.action = #selector(togglePopover)
             button.target = self
         }
@@ -115,60 +115,64 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func settingsDidChange() {
-        updateStatusItemAppearance()
+        DispatchQueue.main.async {
+            self.updateStatusItemAppearance()
+        }
     }
 
     @objc private func usageDidUpdate() {
-        updateStatusItemAppearance()
-        checkForNotifications()
+        DispatchQueue.main.async {
+            self.updateStatusItemAppearance()
+            self.checkForNotifications()
+        }
     }
 
     private func updateStatusItemAppearance() {
         guard let button = statusItem.button else { return }
 
         let snapshot = usageService.currentUsage
-        let weekUsage = snapshot.sevenDayUtilization
+        let weeklyRemaining = snapshot.weeklyQuotaRemainingPercent
+        let weeklyUsed = snapshot.weeklyQuotaUsedPercent
 
         if settingsManager.settings.compactDisplay {
-            let fiveH = snapshot.fiveHourUtilization
-            let sevenD = snapshot.sevenDayUtilization
             let font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
 
             let str = NSMutableAttributedString()
-            str.append(NSAttributedString(string: "\(fiveH)%",
-                attributes: [.font: font, .foregroundColor: usageColor(for: fiveH)]))
+            str.append(NSAttributedString(string: "D\(snapshot.dailyQuotaRemainingPercent)",
+                attributes: [.font: font, .foregroundColor: quotaColor(forRemaining: snapshot.dailyQuotaRemainingPercent)]))
             str.append(NSAttributedString(string: " · ",
                 attributes: [.font: font, .foregroundColor: NSColor.secondaryLabelColor]))
-            str.append(NSAttributedString(string: "\(sevenD)%",
-                attributes: [.font: font, .foregroundColor: usageColor(for: sevenD)]))
+            str.append(NSAttributedString(string: "W\(weeklyRemaining)",
+                attributes: [.font: font, .foregroundColor: quotaColor(forRemaining: weeklyRemaining)]))
 
             button.image = nil
             button.attributedTitle = str
         } else {
             let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
             let symbolName: String
-            if weekUsage >= 80 { symbolName = "exclamationmark.triangle.fill" }
-            else if weekUsage >= 50 { symbolName = "chart.pie.fill" }
-            else { symbolName = "chart.pie" }
+            if weeklyUsed >= 90 { symbolName = "exclamationmark.triangle.fill" }
+            else if weeklyUsed >= 75 { symbolName = "gauge.with.dots.needle.100percent" }
+            else { symbolName = "gauge.with.dots.needle.33percent" }
 
-            button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Claude Usage")?
+            button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Windsurf Quota")?
                 .withSymbolConfiguration(config)
             button.attributedTitle = NSAttributedString(
-                string: "\(weekUsage)%",
+                string: "\(weeklyRemaining)%",
                 attributes: [
                     .font: NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium),
-                    .foregroundColor: usageColor(for: weekUsage)
+                    .foregroundColor: quotaColor(forRemaining: weeklyRemaining)
                 ]
             )
         }
     }
 
-    private func usageColor(for percentage: Int) -> NSColor {
+    private func quotaColor(forRemaining remaining: Int) -> NSColor {
+        let used = max(0, 100 - remaining)
         let criticalThreshold = Int(settingsManager.settings.criticalThreshold)
         let warningThreshold = Int(settingsManager.settings.warningThreshold)
-        if percentage >= criticalThreshold {
+        if used >= criticalThreshold {
             return .systemRed
-        } else if percentage >= warningThreshold {
+        } else if used >= warningThreshold {
             return .systemOrange
         }
         return .labelColor
@@ -177,21 +181,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func checkForNotifications() {
         guard settingsManager.settings.notificationsEnabled else { return }
         
-        let usage = usageService.currentUsage.sevenDayUtilization
+        let usage = usageService.currentUsage.weeklyQuotaUsedPercent
         let warningThreshold = Int(settingsManager.settings.warningThreshold)
         let criticalThreshold = Int(settingsManager.settings.criticalThreshold)
 
         if usage >= criticalThreshold && lastCriticalNotified < criticalThreshold {
             sendNotification(
-                title: "Critical: Claude Usage",
-                body: "You've used \(usage)% of your weekly quota. Consider pausing non-essential tasks.",
+                title: "Critical: Windsurf Quota",
+                body: "You've used \(usage)% of your weekly Windsurf quota.",
                 isCritical: true
             )
             lastCriticalNotified = criticalThreshold
         } else if usage >= warningThreshold && lastWarningNotified < warningThreshold && usage < criticalThreshold {
             sendNotification(
-                title: "Warning: Claude Usage",
-                body: "You've used \(usage)% of your weekly quota.",
+                title: "Warning: Windsurf Quota",
+                body: "You've used \(usage)% of your weekly Windsurf quota.",
                 isCritical: false
             )
             lastWarningNotified = warningThreshold

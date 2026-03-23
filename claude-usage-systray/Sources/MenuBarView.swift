@@ -37,10 +37,10 @@ struct MenuBarView: View {
             HStack {
                 Image(systemName: usageIconName)
                     .foregroundColor(usageColor)
-                Text("5hr: \(usageService.currentUsage.fiveHourUtilization)%")
+                Text("Daily: \(usageService.currentUsage.dailyQuotaRemainingPercent)%")
                     .fontWeight(.medium)
                 Spacer()
-                if let timeLeft = usageService.currentUsage.fiveHourResetIn {
+                if let timeLeft = usageService.currentUsage.dailyResetIn {
                     Text(timeLeft)
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -50,12 +50,38 @@ struct MenuBarView: View {
             HStack {
                 Image(systemName: "calendar")
                     .foregroundColor(weeklyColor)
-                Text("Week: \(usageService.currentUsage.sevenDayUtilization)%")
+                Text("Weekly: \(usageService.currentUsage.weeklyQuotaRemainingPercent)%")
                     .fontWeight(.medium)
                 Spacer()
-                if let timeLeft = usageService.currentUsage.sevenDayResetIn {
+                if let timeLeft = usageService.currentUsage.weeklyResetIn {
                     Text(timeLeft)
                         .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            if let planName = usageService.currentUsage.planName {
+                HStack {
+                    Image(systemName: "person.crop.circle")
+                        .foregroundColor(.secondary)
+                    Text(planName)
+                        .font(.caption)
+                    Spacer()
+                    if settingsManager.settings.showSourceInPopover {
+                        Text(usageService.currentUsage.sourceLabelText)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            } else if settingsManager.settings.showSourceInPopover {
+                HStack {
+                    Image(systemName: "externaldrive")
+                        .foregroundColor(.secondary)
+                    Text("Source")
+                        .font(.caption)
+                    Spacer()
+                    Text(usageService.currentUsage.sourceLabelText)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                 }
             }
@@ -75,35 +101,35 @@ struct MenuBarView: View {
     }
 
     private var modelBreakdown: some View {
-        Group {
-            if let sonnetUsage = usageService.currentUsage.sevenDaySonnetUtilization {
-                HStack {
-                    Image(systemName: "cpu")
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text("Updated \(relativeUpdateText)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+
+            if usageService.currentUsage.isStale, let hint = usageService.currentUsage.errorHint {
+                HStack(alignment: .top) {
+                    Image(systemName: "exclamationmark.triangle")
                         .font(.caption)
-                        .foregroundColor(.blue)
-                    Text("Sonnet: \(sonnetUsage)%")
+                        .foregroundColor(.orange)
+                    Text(hint)
                         .font(.caption)
+                        .foregroundColor(.secondary)
                     Spacer()
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 2)
             }
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 2)
     }
 
     private var actionButtons: some View {
         VStack(spacing: 0) {
-            Button(action: openDashboard) {
-                HStack {
-                    Image(systemName: "chart.bar")
-                    Text("Open Dashboard")
-                    Spacer()
-                }
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-
             Button(action: refreshUsage) {
                 HStack {
                     Image(systemName: "arrow.clockwise")
@@ -142,21 +168,21 @@ struct MenuBarView: View {
     }
 
     private var usageIconName: String {
-        let usage = usageService.currentUsage.fiveHourUtilization
-        if usage >= 80 { return "exclamationmark.triangle.fill" }
-        if usage >= 50 { return "chart.pie.fill" }
-        return "chart.pie"
+        let usage = usageService.currentUsage.dailyQuotaUsedPercent
+        if usage >= 90 { return "exclamationmark.triangle.fill" }
+        if usage >= 75 { return "gauge.with.dots.needle.100percent" }
+        return "gauge.with.dots.needle.33percent"
     }
 
     private var usageColor: Color {
-        let usage = usageService.currentUsage.fiveHourUtilization
+        let usage = usageService.currentUsage.dailyQuotaUsedPercent
         if usage >= 90 { return .red }
         if usage >= 70 { return .orange }
         return .primary
     }
 
     private var weeklyColor: Color {
-        let usage = usageService.currentUsage.sevenDayUtilization
+        let usage = usageService.currentUsage.weeklyQuotaUsedPercent
         let criticalThreshold = Int(settingsManager.settings.criticalThreshold)
         let warningThreshold = Int(settingsManager.settings.warningThreshold)
         if usage >= criticalThreshold { return .red }
@@ -164,10 +190,10 @@ struct MenuBarView: View {
         return .primary
     }
 
-    private func openDashboard() {
-        if let url = URL(string: "https://console.anthropic.com/settings/usage") {
-            NSWorkspace.shared.open(url)
-        }
+    private var relativeUpdateText: String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .short
+        return formatter.localizedString(for: usageService.currentUsage.lastUpdated, relativeTo: Date())
     }
 
     private func refreshUsage() {
