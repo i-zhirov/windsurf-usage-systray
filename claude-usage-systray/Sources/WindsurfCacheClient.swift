@@ -67,21 +67,18 @@ final class WindsurfCacheClient {
     private func readItemValue(forKey key: String, databasePath: String) throws -> String? {
         let process = Process()
         let outputPipe = Pipe()
-        let errorPipe = Pipe()
 
         process.executableURL = URL(fileURLWithPath: "/usr/bin/sqlite3")
         process.arguments = [databasePath, "select value from ItemTable where key='\(escapedSQLString(key))';"]
         process.standardOutput = outputPipe
-        process.standardError = errorPipe
+        process.standardError = outputPipe
 
         try process.run()
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
 
-        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-
         guard process.terminationStatus == 0 else {
-            let message = String(data: errorData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let message = String(data: outputData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
             throw WindsurfFetchError.sqliteCommandFailed(message?.isEmpty == false ? message! : "Failed to read Windsurf cached state")
         }
 

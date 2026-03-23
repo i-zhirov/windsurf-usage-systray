@@ -46,10 +46,10 @@ final class WindsurfLiveClient {
         return WindsurfPlanStatus(
             dailyQuotaRemainingPercent: planStatus.dailyQuotaRemainingPercent,
             weeklyQuotaRemainingPercent: planStatus.weeklyQuotaRemainingPercent,
-            dailyQuotaResetAtUnix: planStatus.dailyQuotaResetAtUnix,
-            weeklyQuotaResetAtUnix: planStatus.weeklyQuotaResetAtUnix,
+            dailyQuotaResetAtUnix: planStatus.dailyQuotaResetAtUnix?.value,
+            weeklyQuotaResetAtUnix: planStatus.weeklyQuotaResetAtUnix?.value,
             planName: planStatus.planInfo?.planName,
-            billingStrategy: planStatus.planInfo?.billingStrategy
+            billingStrategy: billingStrategyCode(from: planStatus.planInfo?.billingStrategy)
         ).makeSnapshot(
             source: .live,
             lastUpdated: lastUpdated,
@@ -102,22 +102,21 @@ final class WindsurfLiveClient {
 
         let process = Process()
         let outputPipe = Pipe()
-        let errorPipe = Pipe()
 
         process.executableURL = URL(fileURLWithPath: "/usr/bin/sqlite3")
         process.arguments = [path, "select value from ItemTable where key='windsurfAuthStatus';"]
         process.standardOutput = outputPipe
-        process.standardError = errorPipe
+        process.standardError = outputPipe
 
         try process.run()
+        let output = outputPipe.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
 
         guard process.terminationStatus == 0 else {
-            let message = String(data: errorPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let message = String(data: output, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
             throw WindsurfFetchError.sqliteCommandFailed(message?.isEmpty == false ? message! : "Failed to read Windsurf auth status")
         }
 
-        let output = outputPipe.fileHandleForReading.readDataToEndOfFile()
         guard let envelope = try? decoder.decode(WindsurfAuthStatusEnvelope.self, from: output),
               let apiKey = envelope.apiKey,
               !apiKey.isEmpty else {
@@ -143,6 +142,19 @@ final class WindsurfLiveClient {
         }
 
         return "Windsurf live request failed (\(statusCode))"
+    }
+
+    private func billingStrategyCode(from rawValue: String?) -> Int? {
+        guard let rawValue else { return nil }
+
+        switch rawValue {
+        case "BILLING_STRATEGY_CREDITS":
+            return 1
+        case "BILLING_STRATEGY_QUOTA":
+            return 2
+        default:
+            return nil
+        }
     }
 
     private static func defaultBundleVersionProvider() -> String {
@@ -200,13 +212,34 @@ private struct LivePlanStatusPayload: Decodable {
     let planInfo: LivePlanInfoPayload?
     let dailyQuotaRemainingPercent: Int
     let weeklyQuotaRemainingPercent: Int
-    let dailyQuotaResetAtUnix: Int64?
-    let weeklyQuotaResetAtUnix: Int64?
+    let dailyQuotaResetAtUnix: FlexibleInt64?
+    let weeklyQuotaResetAtUnix: FlexibleInt64?
 }
 
 private struct LivePlanInfoPayload: Decodable {
     let planName: String?
-    let billingStrategy: Int?
+    let billingStrategy: String?
+}
+
+private struct FlexibleInt64: Decodable {
+    let value: Int64?
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+
+        if let intValue = try? container.decode(Int64.self) {
+            value = intValue
+            return
+        }
+
+        if let stringValue = try? container.decode(String.self),
+           let intValue = Int64(stringValue) {
+            value = intValue
+            return
+        }
+
+        value = nil
+    }
 }
 
 private extension ProcessInfo {

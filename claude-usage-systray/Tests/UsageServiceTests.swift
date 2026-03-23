@@ -42,6 +42,37 @@ final class WindsurfProtobufReaderTests: XCTestCase {
             }
         }
     }
+
+    func testDecodeUserStatusSkipsImplausiblePlanStatusCandidate() throws {
+        let invalidCandidate = protobufMessage([
+            .varint(14, 100_000),
+            .varint(15, 1),
+            .varint(17, 1),
+            .varint(18, 1)
+        ])
+
+        let validCandidate = protobufMessage([
+            .message(1, protobufMessage([
+                .string(2, "Teams"),
+                .varint(35, 2)
+            ])),
+            .varint(14, 100),
+            .varint(15, 49),
+            .varint(17, 1_774_339_200),
+            .varint(18, 1_774_771_200)
+        ])
+
+        let data = protobufMessage([
+            .message(13, invalidCandidate),
+            .message(13, validCandidate)
+        ])
+
+        let status = try WindsurfProtobufReader().decodeUserStatus(data)
+
+        XCTAssertEqual(status.dailyQuotaRemainingPercent, 100)
+        XCTAssertEqual(status.weeklyQuotaRemainingPercent, 49)
+        XCTAssertEqual(status.planName, "Teams")
+    }
 }
 
 final class WindsurfPlanStatusTests: XCTestCase {

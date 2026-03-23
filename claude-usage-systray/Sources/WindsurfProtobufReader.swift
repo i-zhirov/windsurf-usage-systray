@@ -9,13 +9,30 @@ struct WindsurfProtobufReader {
     }
 
     func decodeUserStatus(_ data: Data) throws -> WindsurfPlanStatus {
-        guard let planStatusData = try messageField(13, in: data) else {
+        let candidateMessages = try messageFields(13, in: data)
+        guard !candidateMessages.isEmpty else {
             throw WindsurfFetchError.invalidCachedUserStatus
         }
 
+        for candidate in candidateMessages {
+            if let planStatus = try decodePlanStatus(from: candidate), isPlausibleQuotaPlanStatus(planStatus) {
+                return planStatus
+            }
+        }
+
+        for candidate in candidateMessages {
+            if let planStatus = try decodePlanStatus(from: candidate) {
+                return planStatus
+            }
+        }
+
+        throw WindsurfFetchError.invalidCachedUserStatus
+    }
+
+    private func decodePlanStatus(from planStatusData: Data) throws -> WindsurfPlanStatus? {
         guard let dailyQuotaRemainingPercent = try int32Field(14, in: planStatusData),
               let weeklyQuotaRemainingPercent = try int32Field(15, in: planStatusData) else {
-            throw WindsurfFetchError.invalidCachedUserStatus
+            return nil
         }
 
         let dailyQuotaResetAtUnix = try int64Field(17, in: planStatusData)
@@ -35,8 +52,29 @@ struct WindsurfProtobufReader {
         )
     }
 
+    private func isPlausibleQuotaPlanStatus(_ planStatus: WindsurfPlanStatus) -> Bool {
+        guard (0...100).contains(planStatus.dailyQuotaRemainingPercent),
+              (0...100).contains(planStatus.weeklyQuotaRemainingPercent) else {
+            return false
+        }
+
+        if let dailyReset = planStatus.dailyQuotaResetAtUnix, dailyReset < 1_500_000_000 {
+            return false
+        }
+
+        if let weeklyReset = planStatus.weeklyQuotaResetAtUnix, weeklyReset < 1_500_000_000 {
+            return false
+        }
+
+        return true
+    }
+
     private func messageField(_ targetFieldNumber: Int, in data: Data) throws -> Data? {
-        try firstField(targetFieldNumber, expectedWireType: .lengthDelimited, in: data).flatMap { Data($0) }
+        try messageFields(targetFieldNumber, in: data).first
+    }
+
+    private func messageFields(_ targetFieldNumber: Int, in data: Data) throws -> [Data] {
+        try allFields(targetFieldNumber, expectedWireType: .lengthDelimited, in: data).map { Data($0) }
     }
 
     private func stringField(_ targetFieldNumber: Int, in data: Data) throws -> String? {
@@ -60,7 +98,12 @@ struct WindsurfProtobufReader {
     }
 
     private func firstField(_ targetFieldNumber: Int, expectedWireType: WireType, in data: Data) throws -> Data? {
+        try allFields(targetFieldNumber, expectedWireType: expectedWireType, in: data).first
+    }
+
+    private func allFields(_ targetFieldNumber: Int, expectedWireType: WireType, in data: Data) throws -> [Data] {
         var offset = data.startIndex
+        var results: [Data] = []
 
         while offset < data.endIndex {
             let key = try decodeVarint(from: data, offset: &offset)
@@ -72,11 +115,11 @@ struct WindsurfProtobufReader {
 
             let value = try decodeFieldValue(wireType: wireType, from: data, offset: &offset)
             if fieldNumber == targetFieldNumber, wireType == expectedWireType {
-                return value
+                results.append(Data(value))
             }
         }
 
-        return nil
+        return results
     }
 
     private func decodeFieldValue(wireType: WireType, from data: Data, offset: inout Data.Index) throws -> Data {

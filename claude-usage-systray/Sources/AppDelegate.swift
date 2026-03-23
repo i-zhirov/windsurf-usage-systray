@@ -58,7 +58,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "gauge.with.dots.needle.33percent", accessibilityDescription: "Windsurf Quota")
+            button.image = statusSymbolImage(named: "gauge.with.dots.needle.33percent")
+            button.title = "WS"
             button.action = #selector(togglePopover)
             button.target = self
         }
@@ -131,22 +132,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let button = statusItem.button else { return }
 
         let snapshot = usageService.currentUsage
+        if usageService.isLoading, snapshot.source == .unavailable {
+            button.image = statusSymbolImage(named: "hourglass")
+            button.title = " ..."
+            button.attributedTitle = NSAttributedString(string: "")
+            return
+        }
+
+        if snapshot.source == .unavailable {
+            button.image = statusSymbolImage(named: "exclamationmark.triangle")
+            button.title = " --"
+            button.attributedTitle = NSAttributedString(string: "")
+            return
+        }
+
         let weeklyRemaining = snapshot.weeklyQuotaRemainingPercent
         let weeklyUsed = snapshot.weeklyQuotaUsedPercent
 
         if settingsManager.settings.compactDisplay {
-            let font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
-
-            let str = NSMutableAttributedString()
-            str.append(NSAttributedString(string: "D\(snapshot.dailyQuotaRemainingPercent)",
-                attributes: [.font: font, .foregroundColor: quotaColor(forRemaining: snapshot.dailyQuotaRemainingPercent)]))
-            str.append(NSAttributedString(string: " · ",
-                attributes: [.font: font, .foregroundColor: NSColor.secondaryLabelColor]))
-            str.append(NSAttributedString(string: "W\(weeklyRemaining)",
-                attributes: [.font: font, .foregroundColor: quotaColor(forRemaining: weeklyRemaining)]))
-
-            button.image = nil
-            button.attributedTitle = str
+            button.image = statusSymbolImage(named: "gauge.with.dots.needle.33percent")
+            button.title = " D\(snapshot.dailyQuotaRemainingPercent) W\(weeklyRemaining)"
+            button.attributedTitle = NSAttributedString(string: "")
         } else {
             let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
             let symbolName: String
@@ -154,15 +160,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             else if weeklyUsed >= 75 { symbolName = "gauge.with.dots.needle.100percent" }
             else { symbolName = "gauge.with.dots.needle.33percent" }
 
-            button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Windsurf Quota")?
-                .withSymbolConfiguration(config)
-            button.attributedTitle = NSAttributedString(
-                string: "\(weeklyRemaining)%",
-                attributes: [
-                    .font: NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium),
-                    .foregroundColor: quotaColor(forRemaining: weeklyRemaining)
-                ]
-            )
+            button.image = statusSymbolImage(named: symbolName)?.withSymbolConfiguration(config)
+            button.title = " \(weeklyRemaining)%"
+            button.attributedTitle = NSAttributedString(string: "")
         }
     }
 
@@ -176,6 +176,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return .systemOrange
         }
         return .labelColor
+    }
+
+    private func statusSymbolImage(named symbolName: String) -> NSImage? {
+        NSImage(systemSymbolName: symbolName, accessibilityDescription: "Windsurf Quota")
+            ?? NSImage(systemSymbolName: "chart.pie.fill", accessibilityDescription: "Windsurf Quota")
     }
 
     private func checkForNotifications() {

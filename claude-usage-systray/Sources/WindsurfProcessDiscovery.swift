@@ -146,22 +146,19 @@ final class WindsurfProcessDiscovery {
     private static func runCommand(_ executablePath: String, arguments: [String], processInfo: ProcessInfo) throws -> String {
         let process = Process()
         let stdoutPipe = Pipe()
-        let stderrPipe = Pipe()
 
         process.executableURL = URL(fileURLWithPath: executablePath)
         process.arguments = arguments
         process.standardOutput = stdoutPipe
-        process.standardError = stderrPipe
+        process.standardError = stdoutPipe
         process.environment = ["PATH": processInfo.environment["PATH"] ?? "/usr/bin:/bin:/usr/sbin:/sbin"]
 
         try process.run()
+        let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
 
-        let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-        let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-
         guard process.terminationStatus == 0 else {
-            let message = String(data: stderrData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let message = String(data: stdoutData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
             throw WindsurfFetchError.liveDiscoveryFailed(message?.isEmpty == false ? message! : "Command failed: \(executablePath)")
         }
 

@@ -92,6 +92,7 @@ final class UsageService: ObservableObject {
     @Published private(set) var isLoading: Bool = false
 
     private var refreshTimer: Timer?
+    private var fetchTask: Task<Void, Never>?
     private let liveRefreshInterval: TimeInterval = 90
     private let cacheRefreshInterval: TimeInterval = 5 * 60
     private let failureRetryInterval: TimeInterval = 60
@@ -102,6 +103,10 @@ final class UsageService: ObservableObject {
     var cacheClient: WindsurfCacheFetching
 
     private var cachedToken: String?
+
+    #if DEBUG
+    private let debugLogPath = "/tmp/windsurf-usage-debug.log"
+    #endif
 
     init(
         liveClient: WindsurfLiveFetching = WindsurfLiveClient(),
@@ -126,6 +131,8 @@ final class UsageService: ObservableObject {
     func stopPolling() {
         refreshTimer?.invalidate()
         refreshTimer = nil
+        fetchTask?.cancel()
+        fetchTask = nil
     }
 
     private func scheduleTimer(interval: TimeInterval) {
@@ -136,13 +143,29 @@ final class UsageService: ObservableObject {
     }
 
     func fetchUsage() {
+        if fetchTask != nil {
+            debugLog("skip fetch: already in progress")
+            return
+        }
+
+        debugLog("fetch started")
         DispatchQueue.main.async { self.isLoading = true }
 
-        Task {
+        fetchTask = Task {
+            defer {
+                Task { @MainActor in
+                    self.fetchTask = nil
+                }
+            }
+
             let settings = await MainActor.run { SettingsManager.shared.settings }
 
             do {
                 let resolution = try await resolveFetch(settings: settings)
+                self.debugLog("fetch resolved: source=\(resolution.snapshot.source.rawValue) daily=\(resolution.snapshot.dailyQuotaRemainingPercent) weekly=\(resolution.snapshot.weeklyQuotaRemainingPercent)")
+                if let message = resolution.errorMessage {
+                    self.debugLog("fetch warning: \(message)")
+                }
 
                 await MainActor.run {
                     self.currentUsage = resolution.snapshot
@@ -151,6 +174,7 @@ final class UsageService: ObservableObject {
                     self.scheduleTimer(interval: resolution.nextInterval)
                 }
             } catch {
+                self.debugLog("fetch failed: \(error.localizedDescription)")
                 await MainActor.run {
                     self.error = error.localizedDescription
                     self.scheduleTimer(interval: self.failureRetryInterval)
@@ -161,9 +185,13 @@ final class UsageService: ObservableObject {
     }
 
     func resolveFetch(settings: AppSettings) async throws -> FetchResolution {
+        debugLog("resolve start: preferLiveMode=\(settings.preferLiveMode)")
         if settings.preferLiveMode {
             do {
-                let snapshot = try await liveClient.fetchSnapshot(lastUpdated: Date())
+                let snapshot = try await withTimeout(seconds: 15) {
+                    try await self.liveClient.fetchSnapshot(lastUpdated: Date())
+                }
+                debugLog("resolve live success")
                 return FetchResolution(
                     snapshot: snapshot,
                     errorMessage: nil,
@@ -171,15 +199,18 @@ final class UsageService: ObservableObject {
                 )
             } catch {
                 let liveError = error.localizedDescription
+                debugLog("resolve live failed: \(liveError)")
 
                 do {
                     let snapshot = try cacheClient.fetchSnapshot(settings: settings)
+                    debugLog("resolve cache fallback success")
                     return FetchResolution(
                         snapshot: snapshot,
                         errorMessage: "Live data unavailable, showing cached quota: \(liveError)",
                         nextInterval: cacheRefreshInterval
                     )
                 } catch {
+                    debugLog("resolve cache fallback failed: \(error.localizedDescription)")
                     throw NSError(
                         domain: "WindsurfUsage",
                         code: 1,
@@ -190,11 +221,64 @@ final class UsageService: ObservableObject {
         }
 
         let snapshot = try cacheClient.fetchSnapshot(settings: settings)
+        debugLog("resolve cache-only success")
         return FetchResolution(
             snapshot: snapshot,
             errorMessage: nil,
             nextInterval: cacheRefreshInterval
         )
+    }
+
+    private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
+        debugLog("timeout wrapper start: \(seconds)s")
+        return try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask {
+                try await operation()
+            }
+
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw NSError(
+                    domain: "WindsurfUsage",
+                    code: 2,
+                    userInfo: [NSLocalizedDescriptionKey: "Live request timed out"]
+                )
+            }
+
+            guard let first = try await group.next() else {
+                throw NSError(
+                    domain: "WindsurfUsage",
+                    code: 3,
+                    userInfo: [NSLocalizedDescriptionKey: "Live request failed"]
+                )
+            }
+
+            group.cancelAll()
+            debugLog("timeout wrapper completed")
+            return first
+        }
+    }
+
+    private func debugLog(_ message: String) {
+        #if DEBUG
+        let timestamp = ISO8601DateFormatter().string(from: Date())
+        let line = "[\(timestamp)] \(message)\n"
+        guard let data = line.data(using: .utf8) else { return }
+
+        if FileManager.default.fileExists(atPath: debugLogPath) {
+            if let fileHandle = try? FileHandle(forWritingTo: URL(fileURLWithPath: debugLogPath)) {
+                do {
+                    try fileHandle.seekToEnd()
+                    try fileHandle.write(contentsOf: data)
+                    try fileHandle.close()
+                } catch {
+                    try? fileHandle.close()
+                }
+            }
+        } else {
+            try? data.write(to: URL(fileURLWithPath: debugLogPath), options: .atomic)
+        }
+        #endif
     }
 
     func fetchOAuthUsage(accessToken: String) async throws -> OAuthUsageResponse {
