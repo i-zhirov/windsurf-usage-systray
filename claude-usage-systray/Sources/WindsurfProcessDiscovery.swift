@@ -1,15 +1,19 @@
 import Foundation
 
 final class WindsurfProcessDiscovery {
+    typealias CommandRunner = (String, [String]) throws -> String
+
     private let supportedLanguageServerNames = [
         "language_server_macos_arm",
         "language_server_macos_x64"
     ]
 
     private let processInfo: ProcessInfo
+    private let commandRunner: CommandRunner
 
-    init(processInfo: ProcessInfo = .processInfo) {
+    init(processInfo: ProcessInfo = .processInfo, commandRunner: CommandRunner? = nil) {
         self.processInfo = processInfo
+        self.commandRunner = commandRunner ?? Self.defaultRunCommand(processInfo: processInfo)
     }
 
     func discover() throws -> WindsurfLiveDiscovery {
@@ -29,7 +33,7 @@ final class WindsurfProcessDiscovery {
     }
 
     private func languageServerProcessIdentifier() throws -> Int32 {
-        let output = try runCommand("/bin/ps", arguments: ["-axo", "pid=,command="])
+        let output = try commandRunner("/bin/ps", ["-axo", "pid=,command="])
 
         for line in output.split(separator: "\n") {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
@@ -49,7 +53,7 @@ final class WindsurfProcessDiscovery {
     }
 
     private func processEnvironment(processIdentifier: Int32) throws -> [String: String] {
-        let output = try runCommand("/bin/ps", arguments: ["eww", "-p", String(processIdentifier)])
+        let output = try commandRunner("/bin/ps", ["eww", "-p", String(processIdentifier)])
         guard let commandLine = output.split(separator: "\n").last else {
             throw WindsurfFetchError.liveDiscoveryFailed("Unable to inspect Windsurf language server environment")
         }
@@ -66,7 +70,7 @@ final class WindsurfProcessDiscovery {
     }
 
     private func localRPCPort(processIdentifier: Int32) throws -> Int {
-        let output = try runCommand("/usr/sbin/lsof", arguments: ["-nP", "-a", "-p", String(processIdentifier), "-iTCP"])
+        let output = try commandRunner("/usr/sbin/lsof", ["-nP", "-a", "-p", String(processIdentifier), "-iTCP"])
 
         var listenPorts: [Int] = []
         for line in output.split(separator: "\n") {
@@ -90,7 +94,13 @@ final class WindsurfProcessDiscovery {
         return Int(digits)
     }
 
-    private func runCommand(_ executablePath: String, arguments: [String]) throws -> String {
+    private static func defaultRunCommand(processInfo: ProcessInfo) -> CommandRunner {
+        return { executablePath, arguments in
+            try Self.runCommand(executablePath, arguments: arguments, processInfo: processInfo)
+        }
+    }
+
+    private static func runCommand(_ executablePath: String, arguments: [String], processInfo: ProcessInfo) throws -> String {
         let process = Process()
         let stdoutPipe = Pipe()
         let stderrPipe = Pipe()
@@ -99,9 +109,7 @@ final class WindsurfProcessDiscovery {
         process.arguments = arguments
         process.standardOutput = stdoutPipe
         process.standardError = stderrPipe
-        process.environment = [
-            "PATH": processInfo.environment["PATH"] ?? "/usr/bin:/bin:/usr/sbin:/sbin"
-        ]
+        process.environment = ["PATH": processInfo.environment["PATH"] ?? "/usr/bin:/bin:/usr/sbin:/sbin"]
 
         try process.run()
         process.waitUntilExit()

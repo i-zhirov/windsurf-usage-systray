@@ -75,6 +75,56 @@ final class WindsurfPlanStatusTests: XCTestCase {
     }
 }
 
+final class WindsurfProcessDiscoveryTests: XCTestCase {
+
+    func testDiscoverSupportsAppleSiliconLanguageServerName() throws {
+        let discovery = makeDiscovery(processLine: "123 /Applications/Windsurf.app/.../language_server_macos_arm --run_child")
+
+        let result = try discovery.discover()
+
+        XCTAssertEqual(result.processIdentifier, 123)
+        XCTAssertEqual(result.rpcPort, 56429)
+        XCTAssertEqual(result.csrfToken, "token-123")
+    }
+
+    func testDiscoverSupportsIntelLanguageServerName() throws {
+        let discovery = makeDiscovery(processLine: "456 /Applications/Windsurf.app/.../language_server_macos_x64 --run_child")
+
+        let result = try discovery.discover()
+
+        XCTAssertEqual(result.processIdentifier, 456)
+        XCTAssertEqual(result.rpcPort, 56429)
+        XCTAssertEqual(result.csrfToken, "token-456")
+    }
+
+    func testDiscoverSupportsUnknownFutureMacSuffixByPrefix() throws {
+        let discovery = makeDiscovery(processLine: "789 /Applications/Windsurf.app/.../language_server_macos_universal --run_child")
+
+        let result = try discovery.discover()
+
+        XCTAssertEqual(result.processIdentifier, 789)
+    }
+
+    private func makeDiscovery(processLine: String) -> WindsurfProcessDiscovery {
+        WindsurfProcessDiscovery(commandRunner: { command, arguments in
+            if command == "/bin/ps", arguments == ["-axo", "pid=,command="] {
+                return processLine + "\n"
+            }
+
+            if command == "/bin/ps", arguments == ["eww", "-p", processIdentifier(from: processLine)] {
+                return processLine + " WINDSURF_CSRF_TOKEN=token-\(processIdentifier(from: processLine)) PATH=/usr/bin\n"
+            }
+
+            if command == "/usr/sbin/lsof", arguments == ["-nP", "-a", "-p", processIdentifier(from: processLine), "-iTCP"] {
+                return "COMMAND PID USER FD TYPE DEVICE SIZE/OFF NODE NAME\nls \(processIdentifier(from: processLine)) me 8u IPv4 0t0 TCP 127.0.0.1:56429 (LISTEN)\nls \(processIdentifier(from: processLine)) me 9u IPv4 0t0 TCP 127.0.0.1:56441 (LISTEN)\n"
+            }
+
+            XCTFail("Unexpected command: \(command) \(arguments)")
+            return ""
+        })
+    }
+}
+
 final class UsageSnapshotFormattingTests: XCTestCase {
 
     func testCompactMenuBarFormattingUsesDailyAndWeeklyQuota() {
@@ -199,6 +249,10 @@ private func protobufMessage(_ fields: [ProtobufField]) -> Data {
     }
 
     return data
+}
+
+private func processIdentifier(from processLine: String) -> String {
+    processLine.split(separator: " ").first.map(String.init) ?? "0"
 }
 
 private func varint(_ value: UInt64) -> Data {
