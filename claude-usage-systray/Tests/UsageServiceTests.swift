@@ -212,7 +212,8 @@ final class UsageServiceCoordinatorTests: XCTestCase {
 
         let service = UsageService(
             liveClient: MockLiveClient(result: .success(liveSnapshot)),
-            cacheClient: MockCacheClient(result: .failure(WindsurfFetchError.missingAuthStatus))
+            cacheClient: MockCacheClient(result: .failure(WindsurfFetchError.missingAuthStatus)),
+            cacheDirectoryURL: uniqueCacheDirectoryURL()
         )
 
         let resolution = try await service.resolveFetch(settings: makeSettings(preferLiveMode: true))
@@ -237,7 +238,8 @@ final class UsageServiceCoordinatorTests: XCTestCase {
 
         let service = UsageService(
             liveClient: MockLiveClient(result: .failure(WindsurfFetchError.liveRequestFailed("timeout"))),
-            cacheClient: MockCacheClient(result: .success(cacheSnapshot))
+            cacheClient: MockCacheClient(result: .success(cacheSnapshot)),
+            cacheDirectoryURL: uniqueCacheDirectoryURL()
         )
 
         let resolution = try await service.resolveFetch(settings: makeSettings(preferLiveMode: true))
@@ -249,7 +251,8 @@ final class UsageServiceCoordinatorTests: XCTestCase {
     func testResolveFetchFailsWhenLiveAndCacheFail() async {
         let service = UsageService(
             liveClient: MockLiveClient(result: .failure(WindsurfFetchError.liveRequestFailed("live down"))),
-            cacheClient: MockCacheClient(result: .failure(WindsurfFetchError.missingAuthStatus))
+            cacheClient: MockCacheClient(result: .failure(WindsurfFetchError.missingAuthStatus)),
+            cacheDirectoryURL: uniqueCacheDirectoryURL()
         )
 
         do {
@@ -276,7 +279,7 @@ final class UsageServiceCoordinatorTests: XCTestCase {
 
         let liveClient = MockLiveClient(result: .failure(WindsurfFetchError.liveRequestFailed("should not be used")))
         let cacheClient = MockCacheClient(result: .success(cacheSnapshot))
-        let service = UsageService(liveClient: liveClient, cacheClient: cacheClient)
+        let service = UsageService(liveClient: liveClient, cacheClient: cacheClient, cacheDirectoryURL: uniqueCacheDirectoryURL())
 
         let resolution = try await service.resolveFetch(settings: makeSettings(preferLiveMode: false))
 
@@ -404,6 +407,12 @@ private func makeSettings(preferLiveMode: Bool) -> AppSettings {
     var settings = AppSettings()
     settings.preferLiveMode = preferLiveMode
     return settings
+}
+
+private func uniqueCacheDirectoryURL() -> URL {
+    FileManager.default.temporaryDirectory
+        .appendingPathComponent("windsurf-usage-tests", isDirectory: true)
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
 }
 
 private func protobufMessage(_ fields: [ProtobufField]) -> Data {

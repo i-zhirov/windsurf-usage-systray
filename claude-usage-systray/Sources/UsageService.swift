@@ -103,6 +103,8 @@ final class UsageService: ObservableObject {
     var cacheClient: WindsurfCacheFetching
 
     private var cachedToken: String?
+    private let appCacheDirectoryURL: URL
+    private let appCacheSnapshotURL: URL
 
     #if DEBUG
     private let debugLogPath = "/tmp/windsurf-usage-debug.log"
@@ -110,10 +112,21 @@ final class UsageService: ObservableObject {
 
     init(
         liveClient: WindsurfLiveFetching = WindsurfLiveClient(),
-        cacheClient: WindsurfCacheFetching = WindsurfCacheClient()
+        cacheClient: WindsurfCacheFetching = WindsurfCacheClient(),
+        cacheDirectoryURL: URL? = nil
     ) {
         self.liveClient = liveClient
         self.cacheClient = cacheClient
+        let appDirectory: URL
+        if let cacheDirectoryURL {
+            appDirectory = cacheDirectoryURL
+        } else {
+            let baseDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+                ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support")
+            appDirectory = baseDirectory.appendingPathComponent("WindsurfUsageSystray", isDirectory: true)
+        }
+        self.appCacheDirectoryURL = appDirectory
+        self.appCacheSnapshotURL = appDirectory.appendingPathComponent("last_snapshot.json")
     }
 
     private func accessToken() throws -> String {
@@ -173,6 +186,7 @@ final class UsageService: ObservableObject {
                     self.isLoading = false
                     self.scheduleTimer(interval: resolution.nextInterval)
                 }
+                self.persistSnapshotForCache(resolution.snapshot)
             } catch {
                 self.debugLog("fetch failed: \(error.localizedDescription)")
                 await MainActor.run {
@@ -191,6 +205,7 @@ final class UsageService: ObservableObject {
                 let snapshot = try await withTimeout(seconds: 15) {
                     try await self.liveClient.fetchSnapshot(lastUpdated: Date())
                 }
+
                 debugLog("resolve live success")
                 return FetchResolution(
                     snapshot: snapshot,
@@ -202,7 +217,7 @@ final class UsageService: ObservableObject {
                 debugLog("resolve live failed: \(liveError)")
 
                 do {
-                    let snapshot = try cacheClient.fetchSnapshot(settings: settings)
+                    let snapshot = try fetchCachedSnapshot(settings: settings)
                     debugLog("resolve cache fallback success")
                     return FetchResolution(
                         snapshot: snapshot,
@@ -220,13 +235,22 @@ final class UsageService: ObservableObject {
             }
         }
 
-        let snapshot = try cacheClient.fetchSnapshot(settings: settings)
+        let snapshot = try fetchCachedSnapshot(settings: settings)
         debugLog("resolve cache-only success")
         return FetchResolution(
             snapshot: snapshot,
             errorMessage: nil,
             nextInterval: cacheRefreshInterval
         )
+    }
+
+    private func fetchCachedSnapshot(settings: AppSettings) throws -> UsageSnapshot {
+        if let persistedSnapshot = loadPersistedSnapshot(settings: settings) {
+            debugLog("using persisted app cache snapshot")
+            return persistedSnapshot
+        }
+
+        return try cacheClient.fetchSnapshot(settings: settings)
     }
 
     private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
@@ -257,6 +281,53 @@ final class UsageService: ObservableObject {
             debugLog("timeout wrapper completed")
             return first
         }
+    }
+
+    private func persistSnapshotForCache(_ snapshot: UsageSnapshot) {
+        guard snapshot.source != .unavailable else { return }
+
+        let persisted = PersistedSnapshot(
+            dailyQuotaRemainingPercent: snapshot.dailyQuotaRemainingPercent,
+            weeklyQuotaRemainingPercent: snapshot.weeklyQuotaRemainingPercent,
+            dailyResetAtUnix: snapshot.dailyResetAt?.timeIntervalSince1970,
+            weeklyResetAtUnix: snapshot.weeklyResetAt?.timeIntervalSince1970,
+            planName: snapshot.planName,
+            billingStrategy: snapshot.billingStrategy,
+            lastUpdatedUnix: snapshot.lastUpdated.timeIntervalSince1970
+        )
+
+        do {
+            try FileManager.default.createDirectory(at: appCacheDirectoryURL, withIntermediateDirectories: true)
+            let data = try JSONEncoder().encode(persisted)
+            try data.write(to: appCacheSnapshotURL, options: .atomic)
+        } catch {
+            debugLog("failed to persist app cache snapshot: \(error.localizedDescription)")
+        }
+    }
+
+    private func loadPersistedSnapshot(settings: AppSettings) -> UsageSnapshot? {
+        guard let data = try? Data(contentsOf: appCacheSnapshotURL),
+              let persisted = try? JSONDecoder().decode(PersistedSnapshot.self, from: data) else {
+            return nil
+        }
+
+        let lastUpdated = Date(timeIntervalSince1970: persisted.lastUpdatedUnix)
+        let age = Date().timeIntervalSince(lastUpdated)
+        let staleInterval = TimeInterval(settings.cacheStaleAfterMinutes * 60)
+        let isStale = age > staleInterval
+
+        return UsageSnapshot(
+            dailyQuotaRemainingPercent: persisted.dailyQuotaRemainingPercent,
+            weeklyQuotaRemainingPercent: persisted.weeklyQuotaRemainingPercent,
+            dailyResetAt: persisted.dailyResetAtUnix.map { Date(timeIntervalSince1970: $0) },
+            weeklyResetAt: persisted.weeklyResetAtUnix.map { Date(timeIntervalSince1970: $0) },
+            planName: persisted.planName,
+            billingStrategy: persisted.billingStrategy,
+            source: .cache,
+            lastUpdated: lastUpdated,
+            isStale: isStale,
+            errorHint: isStale ? "Showing cached Windsurf data" : nil
+        )
     }
 
     private func debugLog(_ message: String) {
@@ -304,4 +375,14 @@ final class UsageService: ObservableObject {
 
         return try JSONDecoder().decode(OAuthUsageResponse.self, from: data)
     }
+}
+
+private struct PersistedSnapshot: Codable {
+    let dailyQuotaRemainingPercent: Int
+    let weeklyQuotaRemainingPercent: Int
+    let dailyResetAtUnix: TimeInterval?
+    let weeklyResetAtUnix: TimeInterval?
+    let planName: String?
+    let billingStrategy: String?
+    let lastUpdatedUnix: TimeInterval
 }
