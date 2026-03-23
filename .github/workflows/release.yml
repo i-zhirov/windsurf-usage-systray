@@ -94,8 +94,8 @@ jobs:
             sha256 \"$SHA\"
 
             url \"https://github.com/adntgv/claude-usage-systray/releases/download/v#{version}/ClaudeUsageSystray.zip\"
-            name \"Claude Usage Systray\"
-            desc \"macOS menu bar app showing Claude.ai plan usage in real time\"
+            name \"Windsurf Usage Systray\"
+            desc \"macOS menu bar app showing Windsurf quota in real time\"
             homepage \"https://github.com/adntgv/claude-usage-systray\"
 
             app \"ClaudeUsageSystray.app\"

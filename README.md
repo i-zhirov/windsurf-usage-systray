@@ -79,7 +79,9 @@ xcodebuild test -project ClaudeUsageSystray.xcodeproj \
 
 ## Status
 
-The app behavior is already Windsurf-oriented, but some project-level names still use the historical `ClaudeUsageSystray` identifiers.
+The app behavior is already Windsurf-oriented.
+
+Some repository, scheme, and artifact names still use historical `ClaudeUsageSystray` identifiers for compatibility with the current build and release pipeline.
 
 ## License
 
