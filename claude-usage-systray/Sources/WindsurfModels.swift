@@ -37,6 +37,12 @@ struct WindsurfPlanStatus {
     }
 }
 
+struct WindsurfLiveDiscovery {
+    let processIdentifier: Int32
+    let rpcPort: Int
+    let csrfToken: String
+}
+
 struct WindsurfAuthStatusEnvelope: Decodable {
     let apiKey: String?
     let userStatusProtoBinaryBase64: String?
@@ -50,6 +56,7 @@ enum WindsurfFetchError: LocalizedError {
     case missingUserStatusPayload
     case invalidUserStatusPayload
     case invalidCachedUserStatus
+    case liveDiscoveryFailed(String)
 
     var errorDescription: String? {
         switch self {
@@ -67,6 +74,8 @@ enum WindsurfFetchError: LocalizedError {
             return "Invalid cached Windsurf user status payload"
         case .invalidCachedUserStatus:
             return "Unable to decode cached Windsurf quota"
+        case .liveDiscoveryFailed(let message):
+            return message
         }
     }
 }
