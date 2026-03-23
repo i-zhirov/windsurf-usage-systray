@@ -10,38 +10,50 @@ struct SettingsView: View {
     @State private var criticalThreshold: Double = 90
     @State private var notificationsEnabled: Bool = true
     @State private var compactDisplay: Bool = true
+    @State private var preferLiveMode: Bool = true
+    @State private var showSourceInPopover: Bool = true
 
     var body: some View {
         VStack(spacing: 0) {
             header
 
             Form {
-                Section("Auth") {
+                Section("Data Source") {
                     HStack {
-                        Image(systemName: "lock.fill")
+                        Image(systemName: preferLiveMode ? "bolt.horizontal.fill" : "externaldrive.fill")
                             .foregroundColor(.green)
-                        Text("Using Claude Code OAuth token")
+                        Text(preferLiveMode ? "Prefer live Windsurf language server" : "Using cached Windsurf state")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         Spacer()
-                        Text("Auto")
+                        Text(preferLiveMode ? "Live" : "Cache")
                             .font(.caption2)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(Color.green.opacity(0.2))
                             .cornerRadius(4)
                     }
+
+                    Toggle("Prefer live Windsurf data", isOn: $preferLiveMode)
+                        .onChange(of: preferLiveMode) { newValue in
+                            settingsManager.setPreferLiveMode(newValue)
+                        }
+
+                    Toggle("Show source in popover", isOn: $showSourceInPopover)
+                        .onChange(of: showSourceInPopover) { newValue in
+                            settingsManager.setShowSourceInPopover(newValue)
+                        }
                 }
 
                 Section("Menu Bar") {
-                    Toggle("Compact display (5h · 7d)", isOn: $compactDisplay)
+                    Toggle("Compact display (D · W)", isOn: $compactDisplay)
                         .onChange(of: compactDisplay) { newValue in
                             settingsManager.setCompactDisplay(newValue)
                         }
                 }
 
                 Section("Notifications") {
-                    Toggle("Enable usage alerts", isOn: $notificationsEnabled)
+                    Toggle("Enable quota alerts", isOn: $notificationsEnabled)
                         .onChange(of: notificationsEnabled) { newValue in
                             settingsManager.setNotificationsEnabled(newValue)
                         }
@@ -74,10 +86,10 @@ struct SettingsView: View {
 
     private var header: some View {
         HStack {
-            Image(systemName: "chart.pie.fill")
+            Image(systemName: "gauge.with.dots.needle.33percent")
                 .font(.title)
                 .foregroundColor(.blue)
-            Text("Claude Usage Settings")
+            Text("Windsurf Quota Settings")
                 .font(.headline)
             Spacer()
             Button(action: { dismiss() }) {
@@ -92,7 +104,7 @@ struct SettingsView: View {
 
     private var footer: some View {
         HStack {
-            Text("Data from claude.ai OAuth")
+            Text(footerDescription)
                 .font(.caption)
                 .foregroundColor(.secondary)
             Spacer()
@@ -110,10 +122,20 @@ struct SettingsView: View {
         criticalThreshold = settingsManager.settings.criticalThreshold
         notificationsEnabled = settingsManager.settings.notificationsEnabled
         compactDisplay = settingsManager.settings.compactDisplay
+        preferLiveMode = settingsManager.settings.preferLiveMode
+        showSourceInPopover = settingsManager.settings.showSourceInPopover
     }
 
     private func resetToDefaults() {
         settingsManager.resetToDefaults()
         loadSettings()
+    }
+
+    private var footerDescription: String {
+        if preferLiveMode {
+            return "Live via Windsurf language server, with cached fallback"
+        }
+
+        return "Using cached Windsurf local state"
     }
 }
