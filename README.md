@@ -32,6 +32,8 @@ The app uses two local data sources:
 
 The app prefers live data when possible and falls back to cached local state when Windsurf is not running or the live request fails.
 
+Windsurf requires a dual-source local-first design because of lack of public API for remaining quota and live quota is best obtained from the authenticated local language server, while cached local state provides a safe fallback.
+
 ## Display modes
 
 Toggle **Compact display** in Settings to switch between:
