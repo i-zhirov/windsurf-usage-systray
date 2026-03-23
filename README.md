@@ -63,17 +63,17 @@ Toggle **Compact display** in Settings to switch between:
 ```bash
 git clone https://github.com/i-zhirov/claude-usage-systray
 cd claude-usage-systray/claude-usage-systray
-xcodebuild -scheme ClaudeUsageSystray -configuration Release build
-open ~/Library/Developer/Xcode/DerivedData/ClaudeUsageSystray-*/Build/Products/Release/ClaudeUsageSystray.app
+xcodebuild -project WindsurfUsageSystray.xcodeproj -scheme WindsurfUsageSystray -configuration Release build
+open ~/Library/Developer/Xcode/DerivedData/WindsurfUsageSystray-*/Build/Products/Release/WindsurfUsageSystray.app
 ```
 
-Or open `ClaudeUsageSystray.xcodeproj` in Xcode and run with ⌘R.
+Or open `WindsurfUsageSystray.xcodeproj` in Xcode and run with ⌘R.
 
 ## Running tests
 
 ```bash
-xcodebuild test -project ClaudeUsageSystray.xcodeproj \
-  -scheme ClaudeUsageSystrayTests \
+xcodebuild test -project WindsurfUsageSystray.xcodeproj \
+  -scheme WindsurfUsageSystrayTests \
   -destination 'platform=macOS'
 ```
 
@@ -81,7 +81,7 @@ xcodebuild test -project ClaudeUsageSystray.xcodeproj \
 
 The app behavior is already Windsurf-oriented.
 
-Some repository, scheme, and artifact names still use historical `ClaudeUsageSystray` identifiers for compatibility with the current build and release pipeline.
+The repository directory name is still historical, but the project, schemes, bundle identifiers, artifacts, and release metadata now use `WindsurfUsageSystray`.
 
 ## License
 
