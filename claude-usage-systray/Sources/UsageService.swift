@@ -89,11 +89,13 @@ final class UsageService: ObservableObject {
     @Published private(set) var weeklyTokens: Int = 0
 
     private var refreshTimer: Timer?
+    private let liveRefreshInterval: TimeInterval = 90
     private let cacheRefreshInterval: TimeInterval = 5 * 60
     private let failureRetryInterval: TimeInterval = 60
 
     // Injectable for testing
     var urlSession: URLSession = .shared
+    var liveClient = WindsurfLiveClient()
     var cacheClient = WindsurfCacheClient()
 
     private var cachedToken: String?
@@ -128,8 +130,43 @@ final class UsageService: ObservableObject {
         DispatchQueue.main.async { self.isLoading = true }
 
         Task {
+            let settings = await MainActor.run { SettingsManager.shared.settings }
+
             do {
-                let settings = await MainActor.run { SettingsManager.shared.settings }
+                if settings.preferLiveMode {
+                    do {
+                        let snapshot = try await liveClient.fetchSnapshot()
+
+                        await MainActor.run {
+                            self.currentUsage = snapshot
+                            self.error = nil
+                            self.isLoading = false
+                            self.scheduleTimer(interval: self.liveRefreshInterval)
+                        }
+                        return
+                    } catch {
+                        let liveError = error.localizedDescription
+
+                        do {
+                            let snapshot = try cacheClient.fetchSnapshot(settings: settings)
+
+                            await MainActor.run {
+                                self.currentUsage = snapshot
+                                self.error = "Live data unavailable, showing cached quota: \(liveError)"
+                                self.isLoading = false
+                                self.scheduleTimer(interval: self.cacheRefreshInterval)
+                            }
+                            return
+                        } catch {
+                            throw NSError(
+                                domain: "WindsurfUsage",
+                                code: 1,
+                                userInfo: [NSLocalizedDescriptionKey: "Live failed: \(liveError). Cache failed: \(error.localizedDescription)"]
+                            )
+                        }
+                    }
+                }
+
                 let snapshot = try cacheClient.fetchSnapshot(settings: settings)
 
                 await MainActor.run {
