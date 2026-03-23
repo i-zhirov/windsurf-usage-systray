@@ -4,10 +4,19 @@ final class WindsurfLiveClient {
     private let discovery: WindsurfProcessDiscovery
     private let session: URLSession
     private let decoder = JSONDecoder()
+    private let fileManager: FileManager
+    private let bundleVersionProvider: () -> String
 
-    init(discovery: WindsurfProcessDiscovery = WindsurfProcessDiscovery(), session: URLSession = .shared) {
+    init(
+        discovery: WindsurfProcessDiscovery = WindsurfProcessDiscovery(),
+        session: URLSession = .shared,
+        fileManager: FileManager = .default,
+        bundleVersionProvider: (() -> String)? = nil
+    ) {
         self.discovery = discovery
         self.session = session
+        self.fileManager = fileManager
+        self.bundleVersionProvider = bundleVersionProvider ?? Self.defaultBundleVersionProvider
     }
 
     func fetchSnapshot(lastUpdated: Date = Date()) async throws -> UsageSnapshot {
@@ -21,8 +30,7 @@ final class WindsurfLiveClient {
         }
 
         guard (200..<300).contains(httpResponse.statusCode) else {
-            let message = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-            throw WindsurfFetchError.liveRequestFailed(message?.isEmpty == false ? message! : "Windsurf live request failed")
+            throw WindsurfFetchError.liveRequestFailed(errorMessage(from: data, statusCode: httpResponse.statusCode))
         }
 
         let payload = try decoder.decode(GetUserStatusEnvelope.self, from: data)
@@ -51,13 +59,15 @@ final class WindsurfLiveClient {
             throw WindsurfFetchError.liveRequestFailed("Invalid Windsurf live URL")
         }
 
+        let windsurfVersion = bundleVersionProvider()
+
         let payload = GetUserStatusRequest(
             metadata: MetadataPayload(
                 ideName: "windsurf",
-                ideVersion: "1.108.2",
+                ideVersion: windsurfVersion,
                 ideType: "windsurf",
                 extensionName: "windsurf",
-                extensionVersion: "1.108.2",
+                extensionVersion: windsurfVersion,
                 apiKey: apiKey,
                 locale: Locale.current.language.languageCode?.identifier ?? "en",
                 os: "macOS",
@@ -73,6 +83,7 @@ final class WindsurfLiveClient {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.httpBody = try JSONEncoder().encode(payload)
+        request.timeoutInterval = 10
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("1", forHTTPHeaderField: "Connect-Protocol-Version")
         request.setValue(discovery.csrfToken, forHTTPHeaderField: "x-codeium-csrf-token")
@@ -81,7 +92,7 @@ final class WindsurfLiveClient {
 
     private func cachedAPIKey() throws -> String {
         let path = NSString(string: "~/Library/Application Support/Windsurf/User/globalStorage/state.vscdb").expandingTildeInPath
-        guard FileManager.default.fileExists(atPath: path) else {
+        guard fileManager.fileExists(atPath: path) else {
             throw WindsurfFetchError.stateDatabaseNotFound
         }
 
@@ -111,6 +122,34 @@ final class WindsurfLiveClient {
 
         return apiKey
     }
+
+    private func errorMessage(from data: Data, statusCode: Int) -> String {
+        if let connectError = try? decoder.decode(ConnectErrorPayload.self, from: data) {
+            if let message = connectError.message?.nonEmpty {
+                return "Windsurf live request failed (\(statusCode)): \(message)"
+            }
+            if let detail = connectError.details?.first?.message?.nonEmpty {
+                return "Windsurf live request failed (\(statusCode)): \(detail)"
+            }
+        }
+
+        if let rawMessage = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !rawMessage.isEmpty {
+            return "Windsurf live request failed (\(statusCode)): \(rawMessage)"
+        }
+
+        return "Windsurf live request failed (\(statusCode))"
+    }
+
+    private static func defaultBundleVersionProvider() -> String {
+        let windsurfAppPath = "/Applications/Windsurf.app"
+        if let bundle = Bundle(path: windsurfAppPath),
+           let version = (bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)?.nonEmpty {
+            return version
+        }
+
+        return "1.108.2"
+    }
 }
 
 private struct GetUserStatusRequest: Encodable {
@@ -136,6 +175,15 @@ private struct MetadataPayload: Encodable {
 
 private struct GetUserStatusEnvelope: Decodable {
     let userStatus: UserStatusPayload?
+}
+
+private struct ConnectErrorPayload: Decodable {
+    let message: String?
+    let details: [ConnectErrorDetail]?
+}
+
+private struct ConnectErrorDetail: Decodable {
+    let message: String?
 }
 
 private struct UserStatusPayload: Decodable {
@@ -164,5 +212,12 @@ private extension ProcessInfo {
         #else
         return "unknown"
         #endif
+    }
+}
+
+private extension String {
+    var nonEmpty: String? {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 }
