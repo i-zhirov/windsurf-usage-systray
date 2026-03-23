@@ -43,7 +43,6 @@
 		53E5600933D38230641F05A7 /* WindsurfModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindsurfModels.swift; sourceTree = "<group>"; };
 		5BA5CACD4846531B6678314F /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
 		65D46C05EBBA1BB057E7DC90 /* UsageData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageData.swift; sourceTree = "<group>"; };
-		7E6464E46878E3551D401D3D /* ClaudeUsageSystray.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClaudeUsageSystray.entitlements; sourceTree = "<group>"; };
 		9CA421BFE35EC68FD59910DB /* UsageServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageServiceTests.swift; sourceTree = "<group>"; };
 		9FFA416A103BAF7DF5092D91 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A7B4665E0B29A657F8E94808 /* WindsurfCacheClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindsurfCacheClient.swift; sourceTree = "<group>"; };
@@ -81,7 +80,6 @@
 			isa = PBXGroup;
 			children = (
 				9FFA416A103BAF7DF5092D91 /* Assets.xcassets */,
-				7E6464E46878E3551D401D3D /* ClaudeUsageSystray.entitlements */,
 				46B17D9EF2A5CE41A4203A4F /* Info.plist */,
 				0D29EEB2DC913D44A2FC997E /* WindsurfUsageSystray.entitlements */,
 			);
