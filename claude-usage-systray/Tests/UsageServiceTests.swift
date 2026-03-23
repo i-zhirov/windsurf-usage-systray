@@ -114,7 +114,7 @@ final class WindsurfProcessDiscoveryTests: XCTestCase {
         let result = try discovery.discover()
 
         XCTAssertEqual(result.processIdentifier, 123)
-        XCTAssertEqual(result.rpcPort, 56429)
+        XCTAssertEqual(result.candidateRPCPorts.first, 56429)
         XCTAssertEqual(result.csrfToken, "token-123")
     }
 
@@ -124,7 +124,7 @@ final class WindsurfProcessDiscoveryTests: XCTestCase {
         let result = try discovery.discover()
 
         XCTAssertEqual(result.processIdentifier, 456)
-        XCTAssertEqual(result.rpcPort, 56429)
+        XCTAssertEqual(result.candidateRPCPorts.first, 56429)
         XCTAssertEqual(result.csrfToken, "token-456")
     }
 
@@ -157,7 +157,7 @@ final class WindsurfProcessDiscoveryTests: XCTestCase {
         let result = try discovery.discover()
 
         XCTAssertEqual(result.processIdentifier, 456)
-        XCTAssertEqual(result.rpcPort, 56441)
+        XCTAssertEqual(result.candidateRPCPorts.first, 56441)
     }
 
     func testDiscoverAvoidsExtensionServerPortWhenChoosingRPCPort() throws {
@@ -168,7 +168,8 @@ final class WindsurfProcessDiscoveryTests: XCTestCase {
 
         let result = try discovery.discover()
 
-        XCTAssertEqual(result.rpcPort, 56429)
+        XCTAssertEqual(result.candidateRPCPorts.first, 56429)
+        XCTAssertEqual(result.candidateRPCPorts, [56429, 56441])
     }
 
     private func makeDiscovery(processLine: String, listeningPorts: [Int] = [56429, 56441]) -> WindsurfProcessDiscovery {

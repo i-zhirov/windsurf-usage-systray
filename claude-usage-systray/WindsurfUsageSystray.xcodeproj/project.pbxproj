@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0A60EEE310289A1B1D35E435 /* UsageData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65D46C05EBBA1BB057E7DC90 /* UsageData.swift */; };
 		0B929BC9DF2A1884FC56B6C5 /* UsageServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA421BFE35EC68FD59910DB /* UsageServiceTests.swift */; };
+		1E498B4C016957E00C858198 /* WindsurfStateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8B38BE10E54CE071DF7D539 /* WindsurfStateStore.swift */; };
 		2CB284E7C622E17F5F745C1F /* WindsurfProtobufReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B96AEC625CD834B2254B6EC0 /* WindsurfProtobufReader.swift */; };
 		4325946975878837951E8EE1 /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BA5CACD4846531B6678314F /* SettingsManager.swift */; };
 		4FEB20BB49FC97F98B87DB0F /* WindsurfLiveClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C3D9D10B0486E97C9976683 /* WindsurfLiveClient.swift */; };
@@ -47,6 +48,7 @@
 		9FFA416A103BAF7DF5092D91 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A7B4665E0B29A657F8E94808 /* WindsurfCacheClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindsurfCacheClient.swift; sourceTree = "<group>"; };
 		A7C34491CE239CDDDC74719C /* UsageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageService.swift; sourceTree = "<group>"; };
+		B8B38BE10E54CE071DF7D539 /* WindsurfStateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindsurfStateStore.swift; sourceTree = "<group>"; };
 		B96AEC625CD834B2254B6EC0 /* WindsurfProtobufReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindsurfProtobufReader.swift; sourceTree = "<group>"; };
 		D2BAB824474874F94C1CC4F2 /* WindsurfUsageSystrayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WindsurfUsageSystrayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD5D521A1426E4FF20554A6A /* WindsurfUsageSystray.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WindsurfUsageSystray.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -109,6 +111,7 @@
 				53E5600933D38230641F05A7 /* WindsurfModels.swift */,
 				EF982BED7E71E5AF6AF9F78E /* WindsurfProcessDiscovery.swift */,
 				B96AEC625CD834B2254B6EC0 /* WindsurfProtobufReader.swift */,
+				B8B38BE10E54CE071DF7D539 /* WindsurfStateStore.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -247,6 +250,7 @@
 				5571D506506BAB1DC046E034 /* WindsurfModels.swift in Sources */,
 				BD878DD40C403DD6E756D20E /* WindsurfProcessDiscovery.swift in Sources */,
 				2CB284E7C622E17F5F745C1F /* WindsurfProtobufReader.swift in Sources */,
+				1E498B4C016957E00C858198 /* WindsurfStateStore.swift in Sources */,
 				AF66A29EE9EAD5C5C3AE0B63 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

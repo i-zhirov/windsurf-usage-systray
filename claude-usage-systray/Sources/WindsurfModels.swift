@@ -39,8 +39,11 @@ struct WindsurfPlanStatus {
 
 struct WindsurfLiveDiscovery {
     let processIdentifier: Int32
-    let rpcPort: Int
+    let candidateRPCPorts: [Int]
     let csrfToken: String
+
+    /// Primary RPC port (first candidate).
+    var rpcPort: Int? { candidateRPCPorts.first }
 }
 
 struct WindsurfAuthStatusEnvelope: Decodable {

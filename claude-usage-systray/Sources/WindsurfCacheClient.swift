@@ -5,30 +5,20 @@ protocol WindsurfCacheFetching {
 }
 
 final class WindsurfCacheClient {
-    private let decoder = JSONDecoder()
     private let protobufReader = WindsurfProtobufReader()
-    private let fileManager: FileManager
+    private let stateStore: WindsurfStateStore
     private let nowProvider: () -> Date
 
-    init(fileManager: FileManager = .default, nowProvider: @escaping () -> Date = Date.init) {
-        self.fileManager = fileManager
+    init(stateStore: WindsurfStateStore = .shared, nowProvider: @escaping () -> Date = Date.init) {
+        self.stateStore = stateStore
         self.nowProvider = nowProvider
     }
 
     func fetchSnapshot(settings: AppSettings) throws -> UsageSnapshot {
-        let databasePath = try stateDatabasePath()
-        let authStatusJSON = try readItemValue(forKey: "windsurfAuthStatus", databasePath: databasePath)
+        let envelope = try stateStore.readAuthStatus()
 
-        guard let authStatusJSON else {
-            throw WindsurfFetchError.missingAuthStatus
-        }
-
-        guard let authStatusData = authStatusJSON.data(using: .utf8),
-              let envelope = try? decoder.decode(WindsurfAuthStatusEnvelope.self, from: authStatusData) else {
-            throw WindsurfFetchError.invalidAuthStatusJSON
-        }
-
-        guard let userStatusProtoBinaryBase64 = envelope.userStatusProtoBinaryBase64, !userStatusProtoBinaryBase64.isEmpty else {
+        guard let userStatusProtoBinaryBase64 = envelope.userStatusProtoBinaryBase64,
+              !userStatusProtoBinaryBase64.isEmpty else {
             throw WindsurfFetchError.missingUserStatusPayload
         }
 
@@ -37,7 +27,7 @@ final class WindsurfCacheClient {
         }
 
         let planStatus = try protobufReader.decodeUserStatus(protobufData)
-        let lastUpdated = try databaseLastModified(at: databasePath)
+        let lastUpdated = try stateStore.databaseLastModified()
         let age = nowProvider().timeIntervalSince(lastUpdated)
         let staleInterval = TimeInterval(settings.cacheStaleAfterMinutes * 60)
         let isStale = age > staleInterval
@@ -48,46 +38,6 @@ final class WindsurfCacheClient {
             isStale: isStale,
             errorHint: isStale ? "Showing cached Windsurf data" : nil
         )
-    }
-
-    private func stateDatabasePath() throws -> String {
-        let path = NSString(string: "~/Library/Application Support/Windsurf/User/globalStorage/state.vscdb").expandingTildeInPath
-        guard fileManager.fileExists(atPath: path) else {
-            throw WindsurfFetchError.stateDatabaseNotFound
-        }
-
-        return path
-    }
-
-    private func databaseLastModified(at path: String) throws -> Date {
-        let attributes = try fileManager.attributesOfItem(atPath: path)
-        return (attributes[.modificationDate] as? Date) ?? nowProvider()
-    }
-
-    private func readItemValue(forKey key: String, databasePath: String) throws -> String? {
-        let process = Process()
-        let outputPipe = Pipe()
-
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/sqlite3")
-        process.arguments = [databasePath, "select value from ItemTable where key='\(escapedSQLString(key))';"]
-        process.standardOutput = outputPipe
-        process.standardError = outputPipe
-
-        try process.run()
-        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-
-        guard process.terminationStatus == 0 else {
-            let message = String(data: outputData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-            throw WindsurfFetchError.sqliteCommandFailed(message?.isEmpty == false ? message! : "Failed to read Windsurf cached state")
-        }
-
-        let output = String(data: outputData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        return output?.isEmpty == false ? output : nil
-    }
-
-    private func escapedSQLString(_ value: String) -> String {
-        value.replacingOccurrences(of: "'", with: "''")
     }
 }
 

@@ -25,7 +25,7 @@ final class WindsurfProcessDiscovery {
         let processContext = try languageServerProcessContext()
         let environment = try processEnvironment(processIdentifier: processContext.processIdentifier)
         let extensionServerPort = extensionServerPort(from: processContext.command)
-        let rpcPort = try localRPCPort(
+        let candidatePorts = try candidateRPCPorts(
             processIdentifier: processContext.processIdentifier,
             extensionServerPort: extensionServerPort
         )
@@ -36,7 +36,7 @@ final class WindsurfProcessDiscovery {
 
         return WindsurfLiveDiscovery(
             processIdentifier: processContext.processIdentifier,
-            rpcPort: rpcPort,
+            candidateRPCPorts: candidatePorts,
             csrfToken: csrfToken
         )
     }
@@ -83,7 +83,9 @@ final class WindsurfProcessDiscovery {
         return environment
     }
 
-    private func localRPCPort(processIdentifier: Int32, extensionServerPort: Int?) throws -> Int {
+    /// Returns all candidate RPC ports, ordered by likelihood of being the Connect RPC port.
+    /// The caller should try ports in order until one succeeds.
+    private func candidateRPCPorts(processIdentifier: Int32, extensionServerPort: Int?) throws -> [Int] {
         let output = try commandRunner("/usr/sbin/lsof", ["-nP", "-a", "-p", String(processIdentifier), "-iTCP"])
 
         var listenPorts: [Int] = []
@@ -98,27 +100,30 @@ final class WindsurfProcessDiscovery {
             throw WindsurfFetchError.liveDiscoveryFailed("Unable to find Windsurf local RPC port")
         }
 
-        let candidatePorts = listenPorts
+        // Filter out extension server port and sort
+        let filteredPorts = listenPorts
             .filter { port in
                 guard let extensionServerPort else { return true }
                 return port != extensionServerPort
             }
             .sorted()
 
-        if let extensionServerPort,
-           let preferredPort = candidatePorts.first(where: { $0 > extensionServerPort }) {
-            return preferredPort
+        // Prefer ports greater than extension server port (RPC typically allocated after)
+        var orderedPorts: [Int] = []
+        if let extensionServerPort {
+            let higherPorts = filteredPorts.filter { $0 > extensionServerPort }
+            let lowerPorts = filteredPorts.filter { $0 <= extensionServerPort }
+            orderedPorts = higherPorts + lowerPorts
+        } else {
+            orderedPorts = filteredPorts
         }
 
-        if let preferredPort = candidatePorts.first {
-            return preferredPort
+        // If all ports were filtered out, fall back to all listen ports
+        if orderedPorts.isEmpty {
+            orderedPorts = listenPorts.sorted()
         }
 
-        if let fallbackPort = listenPorts.sorted().first {
-            return fallbackPort
-        }
-
-        throw WindsurfFetchError.liveDiscoveryFailed("Unable to determine Windsurf local RPC port")
+        return orderedPorts
     }
 
     private func parsePort(from line: String) -> Int? {

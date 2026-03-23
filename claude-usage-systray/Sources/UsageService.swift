@@ -1,63 +1,4 @@
 import Foundation
-import Security
-
-// MARK: - OAuth Keychain
-
-private struct KeychainCredentials: Decodable {
-    let claudeAiOauth: OAuthData
-
-    struct OAuthData: Decodable {
-        let accessToken: String
-        let expiresAt: Double
-    }
-}
-
-func readOAuthAccessToken() throws -> String {
-    var result: AnyObject?
-    let query: [String: Any] = [
-        kSecClass as String: kSecClassGenericPassword,
-        kSecAttrService as String: "Claude Code-credentials",
-        kSecReturnData as String: true,
-        kSecMatchLimit as String: kSecMatchLimitOne
-    ]
-    let status = SecItemCopyMatching(query as CFDictionary, &result)
-    guard status == errSecSuccess, let data = result as? Data else {
-        throw NSError(domain: "Keychain", code: Int(status),
-                      userInfo: [NSLocalizedDescriptionKey: "Claude Code credentials not found in Keychain. Make sure Claude Code is installed and logged in. (status: \(status))"])
-    }
-    let creds = try JSONDecoder().decode(KeychainCredentials.self, from: data)
-    return creds.claudeAiOauth.accessToken
-}
-
-// MARK: - API Response Model
-
-struct OAuthUsageResponse: Decodable {
-    let fiveHour: UsagePeriod?
-    let sevenDay: UsagePeriod?
-    let sevenDaySonnet: UsagePeriod?
-
-    enum CodingKeys: String, CodingKey {
-        case fiveHour = "five_hour"
-        case sevenDay = "seven_day"
-        case sevenDaySonnet = "seven_day_sonnet"
-    }
-
-    struct UsagePeriod: Decodable {
-        let utilization: Double
-        let resetsAt: String
-
-        enum CodingKeys: String, CodingKey {
-            case utilization
-            case resetsAt = "resets_at"
-        }
-
-        var resetsAtDate: Date? {
-            let formatter = ISO8601DateFormatter()
-            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            return formatter.date(from: resetsAt)
-        }
-    }
-}
 
 // MARK: - Utilization helpers (pure, testable)
 
@@ -102,7 +43,6 @@ final class UsageService: ObservableObject {
     var liveClient: WindsurfLiveFetching
     var cacheClient: WindsurfCacheFetching
 
-    private var cachedToken: String?
     private let appCacheDirectoryURL: URL
     private let appCacheSnapshotURL: URL
 
@@ -129,12 +69,6 @@ final class UsageService: ObservableObject {
         self.appCacheSnapshotURL = appDirectory.appendingPathComponent("last_snapshot.json")
     }
 
-    private func accessToken() throws -> String {
-        if let token = cachedToken { return token }
-        let token = try readOAuthAccessToken()
-        cachedToken = token
-        return token
-    }
 
     func startPolling() {
         fetchUsage()
@@ -352,29 +286,6 @@ final class UsageService: ObservableObject {
         #endif
     }
 
-    func fetchOAuthUsage(accessToken: String) async throws -> OAuthUsageResponse {
-        var request = URLRequest(url: URL(string: "https://api.anthropic.com/api/oauth/usage")!)
-        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-        request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
-
-        print("[UsageService] GET /api/oauth/usage")
-
-        let (data, response) = try await urlSession.data(for: request)
-        let body = String(data: data, encoding: .utf8) ?? "<binary>"
-
-        guard let http = response as? HTTPURLResponse else {
-            throw URLError(.badServerResponse)
-        }
-
-        print("[UsageService] HTTP \(http.statusCode) — \(body.prefix(300))")
-
-        guard http.statusCode == 200 else {
-            throw NSError(domain: "OAuthUsage", code: http.statusCode,
-                          userInfo: [NSLocalizedDescriptionKey: "HTTP \(http.statusCode): \(body)"])
-        }
-
-        return try JSONDecoder().decode(OAuthUsageResponse.self, from: data)
-    }
 }
 
 private struct PersistedSnapshot: Codable {

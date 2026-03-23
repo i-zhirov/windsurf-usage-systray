@@ -8,25 +8,45 @@ final class WindsurfLiveClient {
     private let discovery: WindsurfProcessDiscovery
     private let session: URLSession
     private let decoder = JSONDecoder()
-    private let fileManager: FileManager
+    private let stateStore: WindsurfStateStore
     private let bundleVersionProvider: () -> String
 
     init(
         discovery: WindsurfProcessDiscovery = WindsurfProcessDiscovery(),
         session: URLSession = .shared,
-        fileManager: FileManager = .default,
+        stateStore: WindsurfStateStore = .shared,
         bundleVersionProvider: (() -> String)? = nil
     ) {
         self.discovery = discovery
         self.session = session
-        self.fileManager = fileManager
+        self.stateStore = stateStore
         self.bundleVersionProvider = bundleVersionProvider ?? Self.defaultBundleVersionProvider
     }
 
     func fetchSnapshot(lastUpdated: Date = Date()) async throws -> UsageSnapshot {
         let liveDiscovery = try discovery.discover()
         let apiKey = try cachedAPIKey()
-        let request = try makeRequest(discovery: liveDiscovery, apiKey: apiKey)
+
+        guard !liveDiscovery.candidateRPCPorts.isEmpty else {
+            throw WindsurfFetchError.liveDiscoveryFailed("No RPC ports found")
+        }
+
+        // Try each candidate port until one succeeds
+        var lastError: Error?
+        for port in liveDiscovery.candidateRPCPorts {
+            do {
+                return try await fetchFromPort(port, discovery: liveDiscovery, apiKey: apiKey, lastUpdated: lastUpdated)
+            } catch {
+                lastError = error
+                continue
+            }
+        }
+
+        throw lastError ?? WindsurfFetchError.liveRequestFailed("All RPC ports failed")
+    }
+
+    private func fetchFromPort(_ port: Int, discovery: WindsurfLiveDiscovery, apiKey: String, lastUpdated: Date) async throws -> UsageSnapshot {
+        let request = try makeRequest(port: port, csrfToken: discovery.csrfToken, apiKey: apiKey)
         let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -58,8 +78,8 @@ final class WindsurfLiveClient {
         )
     }
 
-    private func makeRequest(discovery: WindsurfLiveDiscovery, apiKey: String) throws -> URLRequest {
-        guard let url = URL(string: "http://127.0.0.1:\(discovery.rpcPort)/exa.language_server_pb.LanguageServerService/GetUserStatus") else {
+    private func makeRequest(port: Int, csrfToken: String, apiKey: String) throws -> URLRequest {
+        guard let url = URL(string: "http://127.0.0.1:\(port)/exa.language_server_pb.LanguageServerService/GetUserStatus") else {
             throw WindsurfFetchError.liveRequestFailed("Invalid Windsurf live URL")
         }
 
@@ -87,43 +107,15 @@ final class WindsurfLiveClient {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.httpBody = try JSONEncoder().encode(payload)
-        request.timeoutInterval = 10
+        request.timeoutInterval = 5
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("1", forHTTPHeaderField: "Connect-Protocol-Version")
-        request.setValue(discovery.csrfToken, forHTTPHeaderField: "x-codeium-csrf-token")
+        request.setValue(csrfToken, forHTTPHeaderField: "x-codeium-csrf-token")
         return request
     }
 
     private func cachedAPIKey() throws -> String {
-        let path = NSString(string: "~/Library/Application Support/Windsurf/User/globalStorage/state.vscdb").expandingTildeInPath
-        guard fileManager.fileExists(atPath: path) else {
-            throw WindsurfFetchError.stateDatabaseNotFound
-        }
-
-        let process = Process()
-        let outputPipe = Pipe()
-
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/sqlite3")
-        process.arguments = [path, "select value from ItemTable where key='windsurfAuthStatus';"]
-        process.standardOutput = outputPipe
-        process.standardError = outputPipe
-
-        try process.run()
-        let output = outputPipe.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-
-        guard process.terminationStatus == 0 else {
-            let message = String(data: output, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-            throw WindsurfFetchError.sqliteCommandFailed(message?.isEmpty == false ? message! : "Failed to read Windsurf auth status")
-        }
-
-        guard let envelope = try? decoder.decode(WindsurfAuthStatusEnvelope.self, from: output),
-              let apiKey = envelope.apiKey,
-              !apiKey.isEmpty else {
-            throw WindsurfFetchError.missingAuthStatus
-        }
-
-        return apiKey
+        try stateStore.readAPIKey()
     }
 
     private func errorMessage(from data: Data, statusCode: Int) -> String {
