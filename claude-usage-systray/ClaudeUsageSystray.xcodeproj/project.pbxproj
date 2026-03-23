@@ -8,13 +8,16 @@
 
 /* Begin PBXBuildFile section */
 		22F4B6C5A7558EED3BD2DB95 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06653C5881670A81199C42CC /* MenuBarView.swift */; };
+		32F20C78B1734AF2A44A4A01 /* WindsurfModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32F20C78B1734AF2A44A4A11 /* WindsurfModels.swift */; };
 		354CBABB4F867F1E95A9A01E /* UsageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEE554A7DA6DDC77A08A3EEE /* UsageService.swift */; };
 		477DC01AB2A27BF9535464A1 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AFD01138604C8622102594F /* main.swift */; };
 		4B94CAD601C9365558A3A209 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C3BC14807EE08B3766D0A9C8 /* Assets.xcassets */; };
 		59259AC8C5B89477A67D5A8D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1107FB82A3A3C9FC04B4F35 /* SettingsView.swift */; };
 		80E1131433C5BE35E6CF65E4 /* UsageData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32234A82B1C94CCB6F3763AE /* UsageData.swift */; };
+		987E4AF60FF541BEA5E54CA2 /* WindsurfCacheClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 987E4AF60FF541BEA5E54CB2 /* WindsurfCacheClient.swift */; };
 		C33689B322FFA7525A92894A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE78D81A249AA2CBF9D9C9CB /* AppDelegate.swift */; };
 		CA4C19637A5CD709F1C57EDA /* UsageServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CF92A3018305AA026317454 /* UsageServiceTests.swift */; };
+		D74E676B4A2746B093FC7991 /* WindsurfProtobufReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74E676B4A2746B093FC79A1 /* WindsurfProtobufReader.swift */; };
 		F25EDEE38ABF1A0E15C849DC /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C024067E6D3F865AF198511C /* SettingsManager.swift */; };
 		F6263675C12E1B942E3CD6AF /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA6F91F4720B31FB4CA872B9 /* Security.framework */; };
 /* End PBXBuildFile section */
@@ -34,13 +37,16 @@
 		20995FA0F9EEA9F7D67A33F6 /* ClaudeUsageSystray.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeUsageSystray.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2AFD01138604C8622102594F /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		32234A82B1C94CCB6F3763AE /* UsageData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageData.swift; sourceTree = "<group>"; };
+		32F20C78B1734AF2A44A4A11 /* WindsurfModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindsurfModels.swift; sourceTree = "<group>"; };
 		8CF92A3018305AA026317454 /* UsageServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageServiceTests.swift; sourceTree = "<group>"; };
 		971BD946FCB9D8A12AC5DA99 /* ClaudeUsageSystrayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClaudeUsageSystrayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		987E4AF60FF541BEA5E54CB2 /* WindsurfCacheClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindsurfCacheClient.swift; sourceTree = "<group>"; };
 		B1107FB82A3A3C9FC04B4F35 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		C024067E6D3F865AF198511C /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
 		C3BC14807EE08B3766D0A9C8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D08767FD02695AFBE000669F /* ClaudeUsageSystray.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClaudeUsageSystray.entitlements; sourceTree = "<group>"; };
 		DA6F91F4720B31FB4CA872B9 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		D74E676B4A2746B093FC79A1 /* WindsurfProtobufReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindsurfProtobufReader.swift; sourceTree = "<group>"; };
 		DE78D81A249AA2CBF9D9C9CB /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		DEE554A7DA6DDC77A08A3EEE /* UsageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageService.swift; sourceTree = "<group>"; };
 		F35CDB3DFFFBEE4CE3F0D52E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -114,6 +120,9 @@
 				B1107FB82A3A3C9FC04B4F35 /* SettingsView.swift */,
 				32234A82B1C94CCB6F3763AE /* UsageData.swift */,
 				DEE554A7DA6DDC77A08A3EEE /* UsageService.swift */,
+				32F20C78B1734AF2A44A4A11 /* WindsurfModels.swift */,
+				D74E676B4A2746B093FC79A1 /* WindsurfProtobufReader.swift */,
+				987E4AF60FF541BEA5E54CB2 /* WindsurfCacheClient.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -222,6 +231,9 @@
 				59259AC8C5B89477A67D5A8D /* SettingsView.swift in Sources */,
 				80E1131433C5BE35E6CF65E4 /* UsageData.swift in Sources */,
 				354CBABB4F867F1E95A9A01E /* UsageService.swift in Sources */,
+				32F20C78B1734AF2A44A4A01 /* WindsurfModels.swift in Sources */,
+				D74E676B4A2746B093FC7991 /* WindsurfProtobufReader.swift in Sources */,
+				987E4AF60FF541BEA5E54CA2 /* WindsurfCacheClient.swift in Sources */,
 				477DC01AB2A27BF9535464A1 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

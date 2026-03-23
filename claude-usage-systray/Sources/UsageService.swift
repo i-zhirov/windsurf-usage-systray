@@ -89,11 +89,12 @@ final class UsageService: ObservableObject {
     @Published private(set) var weeklyTokens: Int = 0
 
     private var refreshTimer: Timer?
-    private let normalInterval: TimeInterval = 5 * 60   // 5 minutes
-    private let backoffInterval: TimeInterval = 15 * 60 // 15 minutes after 429
+    private let cacheRefreshInterval: TimeInterval = 5 * 60
+    private let failureRetryInterval: TimeInterval = 60
 
     // Injectable for testing
     var urlSession: URLSession = .shared
+    var cacheClient = WindsurfCacheClient()
 
     private var cachedToken: String?
 
@@ -108,7 +109,7 @@ final class UsageService: ObservableObject {
 
     func startPolling() {
         fetchUsage()
-        scheduleTimer(interval: normalInterval)
+        scheduleTimer(interval: cacheRefreshInterval)
     }
 
     func stopPolling() {
@@ -128,46 +129,19 @@ final class UsageService: ObservableObject {
 
         Task {
             do {
-                let token = try accessToken()
-                let response = try await fetchOAuthUsage(accessToken: token)
-
-                let fiveHourUtil = Int(response.fiveHour?.utilization ?? 0)
-                let sevenDayUtil = Int(response.sevenDay?.utilization ?? 0)
-                let sonnetUtil: Int? = response.sevenDaySonnet.map { Int($0.utilization) }
-
-                let fiveHourReset = response.fiveHour?.resetsAtDate
-                let sevenDayReset = response.sevenDay?.resetsAtDate
-
-                let snapshot = UsageSnapshot(
-                    fiveHourUtilization: fiveHourUtil,
-                    sevenDayUtilization: sevenDayUtil,
-                    sevenDaySonnetUtilization: sonnetUtil,
-                    fiveHourResetIn: fiveHourReset.map { formatTimeRemaining(until: $0) },
-                    sevenDayResetIn: sevenDayReset.map { formatTimeRemaining(until: $0) },
-                    lastUpdated: Date(),
-                    weeklySessions: 0,
-                    weeklyMessages: 0,
-                    weeklyTokens: 0
-                )
+                let settings = await MainActor.run { SettingsManager.shared.settings }
+                let snapshot = try cacheClient.fetchSnapshot(settings: settings)
 
                 await MainActor.run {
                     self.currentUsage = snapshot
                     self.error = nil
                     self.isLoading = false
-                    self.scheduleTimer(interval: self.normalInterval)
+                    self.scheduleTimer(interval: self.cacheRefreshInterval)
                 }
-            } catch let error as NSError {
-                let isRateLimit = error.code == 429
+            } catch {
                 await MainActor.run {
-                    if isRateLimit {
-                        // Clear token so next attempt re-reads a potentially refreshed token from Keychain
-                        self.cachedToken = nil
-                        self.error = "Rate limited — retrying in 15 min"
-                        self.scheduleTimer(interval: self.backoffInterval)
-                    } else {
-                        self.error = error.localizedDescription
-                        self.scheduleTimer(interval: self.normalInterval)
-                    }
+                    self.error = error.localizedDescription
+                    self.scheduleTimer(interval: self.failureRetryInterval)
                     self.isLoading = false
                 }
             }
