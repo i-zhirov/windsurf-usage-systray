@@ -42,16 +42,17 @@ jobs:
         run: |
           cd claude-usage-systray
           xcodebuild \
-            -scheme ClaudeUsageSystray \
+            -project WindsurfUsageSystray.xcodeproj \
+            -scheme WindsurfUsageSystray \
             -configuration Release \
-            -archivePath build/ClaudeUsageSystray.xcarchive \
+            -archivePath build/WindsurfUsageSystray.xcarchive \
             archive
 
       - name: Export (Developer ID signed)
         run: |
           cd claude-usage-systray
           xcodebuild -exportArchive \
-            -archivePath build/ClaudeUsageSystray.xcarchive \
+            -archivePath build/WindsurfUsageSystray.xcarchive \
             -exportPath build/export \
             -exportOptionsPlist ExportOptions.plist
 
@@ -62,8 +63,8 @@ jobs:
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: |
           cd claude-usage-systray
-          ditto -c -k --keepParent build/export/ClaudeUsageSystray.app ClaudeUsageSystray.zip
-          xcrun notarytool submit ClaudeUsageSystray.zip \
+          ditto -c -k --keepParent build/export/WindsurfUsageSystray.app WindsurfUsageSystray.zip
+          xcrun notarytool submit WindsurfUsageSystray.zip \
             --apple-id "$APPLE_ID" \
             --team-id "$APPLE_TEAM_ID" \
             --password "$APPLE_APP_PASSWORD" \
@@ -72,13 +73,13 @@ jobs:
       - name: Staple
         run: |
           cd claude-usage-systray
-          xcrun stapler staple build/export/ClaudeUsageSystray.app
-          ditto -c -k --keepParent build/export/ClaudeUsageSystray.app ClaudeUsageSystray.zip
+          xcrun stapler staple build/export/WindsurfUsageSystray.app
+          ditto -c -k --keepParent build/export/WindsurfUsageSystray.app WindsurfUsageSystray.zip
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: claude-usage-systray/ClaudeUsageSystray.zip
+          files: claude-usage-systray/WindsurfUsageSystray.zip
           generate_release_notes: true
 
       - name: Update Homebrew tap
@@ -87,22 +88,22 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           VERSION=${TAG#v}
-          SHA=$(shasum -a 256 claude-usage-systray/ClaudeUsageSystray.zip | awk '{print $1}')
+          SHA=$(shasum -a 256 claude-usage-systray/WindsurfUsageSystray.zip | awk '{print $1}')
 
           FORMULA="cask \"claude-usage-systray\" do
             version \"$VERSION\"
             sha256 \"$SHA\"
 
-            url \"https://github.com/adntgv/claude-usage-systray/releases/download/v#{version}/ClaudeUsageSystray.zip\"
+            url \"https://github.com/adntgv/claude-usage-systray/releases/download/v#{version}/WindsurfUsageSystray.zip\"
             name \"Windsurf Usage Systray\"
             desc \"macOS menu bar app showing Windsurf quota in real time\"
             homepage \"https://github.com/adntgv/claude-usage-systray\"
 
-            app \"ClaudeUsageSystray.app\"
+            app \"WindsurfUsageSystray.app\"
 
             zap trash: [
-              \"~/Library/Preferences/com.adntgv.claude-usage-systray.plist\",
-              \"~/Library/Application Support/ClaudeUsageSystray\",
+              \"~/Library/Preferences/com.i-zhirov.windsurf-usage-systray.plist\",
+              \"~/Library/Application Support/WindsurfUsageSystray\",
             ]
           end"
 
