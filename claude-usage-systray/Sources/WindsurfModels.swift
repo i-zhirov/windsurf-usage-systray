@@ -57,6 +57,7 @@ enum WindsurfFetchError: LocalizedError {
     case invalidUserStatusPayload
     case invalidCachedUserStatus
     case liveDiscoveryFailed(String)
+    case liveRequestFailed(String)
 
     var errorDescription: String? {
         switch self {
@@ -75,6 +76,8 @@ enum WindsurfFetchError: LocalizedError {
         case .invalidCachedUserStatus:
             return "Unable to decode cached Windsurf quota"
         case .liveDiscoveryFailed(let message):
+            return message
+        case .liveRequestFailed(let message):
             return message
         }
     }
