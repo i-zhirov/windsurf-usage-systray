@@ -1,38 +1,54 @@
-# Claude Usage Systray
+# Windsurf Usage Systray
 
-A lightweight macOS menu bar app that shows your [Claude.ai](https://claude.ai) plan usage in real time — current session and weekly limits — without opening a browser.
+A lightweight macOS menu bar app that shows your Windsurf quota without opening the editor or a browser.
 
-![Claude Usage Systray](claude-usage-systray/Resources/Assets.xcassets/Image.imageset/Image.png)
+![Windsurf Usage Systray](claude-usage-systray/Resources/Assets.xcassets/Image.imageset/Image.png)
 
 ## What it shows
 
-Mirrors the data on `claude.ai/settings/usage`:
+The app focuses on the Windsurf quota model:
 
 | Metric | Description |
 |--------|-------------|
-| **5h** | Current session usage (resets every ~5 hours) |
-| **7d** | Weekly all-models usage |
-| **Sonnet** | Weekly Sonnet-only usage (shown in popover) |
+| **Daily** | Remaining daily quota percentage |
+| **Weekly** | Remaining weekly quota percentage |
+| **Plan** | Current Windsurf plan when available |
+| **Source** | Whether the app is showing live or cached data |
 
-Colors update based on your configured warning/critical thresholds.
+Colors update from your configured warning and critical thresholds.
 
 ## Requirements
 
 - macOS 13+
-- [Claude Code](https://claude.ai/code) installed and logged in (the app reads its OAuth token from your Keychain — no separate credentials needed)
+- Windsurf installed
+- for live mode: Windsurf should be running
 
-## Install
+## How it works
 
-**Homebrew (recommended):**
+The app uses two local data sources:
 
-```bash
-brew tap adntgv/tap
-brew install --cask claude-usage-systray
-```
+1. live data from the running Windsurf language server
+2. cached quota data from `~/Library/Application Support/Windsurf/User/globalStorage/state.vscdb`
 
-**Manual:**
+The app prefers live data when possible and falls back to cached local state when Windsurf is not running or the live request fails.
 
-Download the latest `ClaudeUsageSystray.zip` from the [Releases page](https://github.com/adntgv/claude-usage-systray/releases), unzip, and move `ClaudeUsageSystray.app` to `/Applications`. The app is notarized — macOS will open it normally on first launch.
+## Display modes
+
+Toggle **Compact display** in Settings to switch between:
+
+- **Compact (default):** `D88 · W49`
+- **Normal:** icon + weekly remaining percentage
+
+## Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Prefer live Windsurf data | On | Use the local Windsurf language server first |
+| Show source in popover | On | Show whether data is live or cached |
+| Compact display | On | Show daily and weekly quota in the menu bar |
+| Warning threshold | 80% | Orange when weekly used quota crosses this |
+| Critical threshold | 90% | Red when weekly used quota crosses this |
+| Quota alerts | On | macOS notification when thresholds are crossed |
 
 ## Build from source
 
@@ -45,36 +61,6 @@ open ~/Library/Developer/Xcode/DerivedData/ClaudeUsageSystray-*/Build/Products/R
 
 Or open `ClaudeUsageSystray.xcodeproj` in Xcode and run with ⌘R.
 
-## Display modes
-
-Toggle **Compact display** in Settings to switch between:
-
-- **Compact (default):** `35% · 71%` — both 5h and 7d inline, each colored by threshold
-- **Normal:** icon + `71%` — weekly usage only
-
-## How it works
-
-The app reads your Claude Code OAuth token from the macOS Keychain (`Claude Code-credentials`) and calls the same internal endpoint that powers `claude.ai/settings/usage`:
-
-```
-GET https://api.anthropic.com/api/oauth/usage
-Authorization: Bearer <oauth_token>
-anthropic-beta: oauth-2025-04-20
-```
-
-The token is read once at startup and cached in memory. It refreshes automatically when you restart the app (Claude Code keeps it current in the Keychain).
-
-> **Note:** This endpoint is undocumented and may change. It requires Claude Code to be installed and logged in.
-
-## Settings
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Compact display | On | Show both 5h and 7d in menu bar |
-| Warning threshold | 80% | Orange color above this |
-| Critical threshold | 90% | Red color above this |
-| Usage alerts | On | macOS notification when thresholds are crossed |
-
 ## Running tests
 
 ```bash
@@ -82,6 +68,10 @@ xcodebuild test -project ClaudeUsageSystray.xcodeproj \
   -scheme ClaudeUsageSystrayTests \
   -destination 'platform=macOS'
 ```
+
+## Status
+
+The app behavior is already Windsurf-oriented, but some project-level names still use the historical `ClaudeUsageSystray` identifiers.
 
 ## License
 
