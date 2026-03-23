@@ -1,0 +1,490 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0A60EEE310289A1B1D35E435 /* UsageData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65D46C05EBBA1BB057E7DC90 /* UsageData.swift */; };
+		0B929BC9DF2A1884FC56B6C5 /* UsageServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA421BFE35EC68FD59910DB /* UsageServiceTests.swift */; };
+		2CB284E7C622E17F5F745C1F /* WindsurfProtobufReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B96AEC625CD834B2254B6EC0 /* WindsurfProtobufReader.swift */; };
+		4325946975878837951E8EE1 /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BA5CACD4846531B6678314F /* SettingsManager.swift */; };
+		4FEB20BB49FC97F98B87DB0F /* WindsurfLiveClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C3D9D10B0486E97C9976683 /* WindsurfLiveClient.swift */; };
+		5571D506506BAB1DC046E034 /* WindsurfModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E5600933D38230641F05A7 /* WindsurfModels.swift */; };
+		64FA788B6446E898EBD9A584 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9FFA416A103BAF7DF5092D91 /* Assets.xcassets */; };
+		875FE68139061FE9CEEF46C9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E7003E3A194DE9F8A14DC37B /* Security.framework */; };
+		9792BB006F8624C5025F5EC8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED62B93C21DF4BD4A86D9C67 /* SettingsView.swift */; };
+		A345F7F21596E3CBD9C9BCCD /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE8E5AFAA430D4D1311CA93 /* MenuBarView.swift */; };
+		AF66A29EE9EAD5C5C3AE0B63 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B59AFA0CAF3C5F7663634A /* main.swift */; };
+		B4F5F47C8ABBA51FFC147A5F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 204CD5040CA574934749DF0E /* AppDelegate.swift */; };
+		BD878DD40C403DD6E756D20E /* WindsurfProcessDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF982BED7E71E5AF6AF9F78E /* WindsurfProcessDiscovery.swift */; };
+		DAC7E47D754DEEFDA3F842F8 /* UsageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C34491CE239CDDDC74719C /* UsageService.swift */; };
+		FB8DDD250FABDF8FB8A875B7 /* WindsurfCacheClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B4665E0B29A657F8E94808 /* WindsurfCacheClient.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D95AC0800C116DF33DA2229E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E0C2D3952C6482AF726F7C39 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F351B941995E9DBE02A6F895;
+			remoteInfo = WindsurfUsageSystray;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0D29EEB2DC913D44A2FC997E /* WindsurfUsageSystray.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WindsurfUsageSystray.entitlements; sourceTree = "<group>"; };
+		204CD5040CA574934749DF0E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		3C3D9D10B0486E97C9976683 /* WindsurfLiveClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindsurfLiveClient.swift; sourceTree = "<group>"; };
+		3DE8E5AFAA430D4D1311CA93 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		46B17D9EF2A5CE41A4203A4F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		53E5600933D38230641F05A7 /* WindsurfModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindsurfModels.swift; sourceTree = "<group>"; };
+		5BA5CACD4846531B6678314F /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
+		65D46C05EBBA1BB057E7DC90 /* UsageData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageData.swift; sourceTree = "<group>"; };
+		7E6464E46878E3551D401D3D /* ClaudeUsageSystray.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClaudeUsageSystray.entitlements; sourceTree = "<group>"; };
+		9CA421BFE35EC68FD59910DB /* UsageServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageServiceTests.swift; sourceTree = "<group>"; };
+		9FFA416A103BAF7DF5092D91 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A7B4665E0B29A657F8E94808 /* WindsurfCacheClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindsurfCacheClient.swift; sourceTree = "<group>"; };
+		A7C34491CE239CDDDC74719C /* UsageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageService.swift; sourceTree = "<group>"; };
+		B96AEC625CD834B2254B6EC0 /* WindsurfProtobufReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindsurfProtobufReader.swift; sourceTree = "<group>"; };
+		D2BAB824474874F94C1CC4F2 /* WindsurfUsageSystrayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WindsurfUsageSystrayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD5D521A1426E4FF20554A6A /* WindsurfUsageSystray.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WindsurfUsageSystray.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E7003E3A194DE9F8A14DC37B /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		ED62B93C21DF4BD4A86D9C67 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		EF982BED7E71E5AF6AF9F78E /* WindsurfProcessDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindsurfProcessDiscovery.swift; sourceTree = "<group>"; };
+		F7B59AFA0CAF3C5F7663634A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D1C0C45024724D283198E86 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				875FE68139061FE9CEEF46C9 /* Security.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		7082A7FA0F6D94382055EBAD /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				9CA421BFE35EC68FD59910DB /* UsageServiceTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		BC6103B9864D5806D41F5296 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				9FFA416A103BAF7DF5092D91 /* Assets.xcassets */,
+				7E6464E46878E3551D401D3D /* ClaudeUsageSystray.entitlements */,
+				46B17D9EF2A5CE41A4203A4F /* Info.plist */,
+				0D29EEB2DC913D44A2FC997E /* WindsurfUsageSystray.entitlements */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		C77EF7E83FC788C1D699DD62 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E7003E3A194DE9F8A14DC37B /* Security.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		D42A45E34B5D2B47C845227D /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				204CD5040CA574934749DF0E /* AppDelegate.swift */,
+				F7B59AFA0CAF3C5F7663634A /* main.swift */,
+				3DE8E5AFAA430D4D1311CA93 /* MenuBarView.swift */,
+				5BA5CACD4846531B6678314F /* SettingsManager.swift */,
+				ED62B93C21DF4BD4A86D9C67 /* SettingsView.swift */,
+				65D46C05EBBA1BB057E7DC90 /* UsageData.swift */,
+				A7C34491CE239CDDDC74719C /* UsageService.swift */,
+				A7B4665E0B29A657F8E94808 /* WindsurfCacheClient.swift */,
+				3C3D9D10B0486E97C9976683 /* WindsurfLiveClient.swift */,
+				53E5600933D38230641F05A7 /* WindsurfModels.swift */,
+				EF982BED7E71E5AF6AF9F78E /* WindsurfProcessDiscovery.swift */,
+				B96AEC625CD834B2254B6EC0 /* WindsurfProtobufReader.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		EDB62D0456226540402C4DD7 = {
+			isa = PBXGroup;
+			children = (
+				BC6103B9864D5806D41F5296 /* Resources */,
+				D42A45E34B5D2B47C845227D /* Sources */,
+				7082A7FA0F6D94382055EBAD /* Tests */,
+				C77EF7E83FC788C1D699DD62 /* Frameworks */,
+				FB718CF79461DFA823099C47 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		FB718CF79461DFA823099C47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DD5D521A1426E4FF20554A6A /* WindsurfUsageSystray.app */,
+				D2BAB824474874F94C1CC4F2 /* WindsurfUsageSystrayTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		BA717D0789EDC99BF949EED2 /* WindsurfUsageSystrayTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CDE83EC78B5476BC103C9F24 /* Build configuration list for PBXNativeTarget "WindsurfUsageSystrayTests" */;
+			buildPhases = (
+				8952AB3F326D91B89B4BF0A7 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1D58F5DA7496FEB61F936279 /* PBXTargetDependency */,
+			);
+			name = WindsurfUsageSystrayTests;
+			packageProductDependencies = (
+			);
+			productName = WindsurfUsageSystrayTests;
+			productReference = D2BAB824474874F94C1CC4F2 /* WindsurfUsageSystrayTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		F351B941995E9DBE02A6F895 /* WindsurfUsageSystray */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AD78D511E78A38C553666E49 /* Build configuration list for PBXNativeTarget "WindsurfUsageSystray" */;
+			buildPhases = (
+				EEEB4A9523A26EF4648FB190 /* Sources */,
+				ECEDA8D0DA006A4CE6E77F09 /* Resources */,
+				8D1C0C45024724D283198E86 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WindsurfUsageSystray;
+			packageProductDependencies = (
+			);
+			productName = WindsurfUsageSystray;
+			productReference = DD5D521A1426E4FF20554A6A /* WindsurfUsageSystray.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E0C2D3952C6482AF726F7C39 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					BA717D0789EDC99BF949EED2 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Manual;
+					};
+					F351B941995E9DBE02A6F895 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Manual;
+					};
+				};
+			};
+			buildConfigurationList = 147A7A82BBB8103DE83D58D9 /* Build configuration list for PBXProject "WindsurfUsageSystray" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = EDB62D0456226540402C4DD7;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = FB718CF79461DFA823099C47 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F351B941995E9DBE02A6F895 /* WindsurfUsageSystray */,
+				BA717D0789EDC99BF949EED2 /* WindsurfUsageSystrayTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		ECEDA8D0DA006A4CE6E77F09 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				64FA788B6446E898EBD9A584 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8952AB3F326D91B89B4BF0A7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0B929BC9DF2A1884FC56B6C5 /* UsageServiceTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EEEB4A9523A26EF4648FB190 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B4F5F47C8ABBA51FFC147A5F /* AppDelegate.swift in Sources */,
+				A345F7F21596E3CBD9C9BCCD /* MenuBarView.swift in Sources */,
+				4325946975878837951E8EE1 /* SettingsManager.swift in Sources */,
+				9792BB006F8624C5025F5EC8 /* SettingsView.swift in Sources */,
+				0A60EEE310289A1B1D35E435 /* UsageData.swift in Sources */,
+				DAC7E47D754DEEFDA3F842F8 /* UsageService.swift in Sources */,
+				FB8DDD250FABDF8FB8A875B7 /* WindsurfCacheClient.swift in Sources */,
+				4FEB20BB49FC97F98B87DB0F /* WindsurfLiveClient.swift in Sources */,
+				5571D506506BAB1DC046E034 /* WindsurfModels.swift in Sources */,
+				BD878DD40C403DD6E756D20E /* WindsurfProcessDiscovery.swift in Sources */,
+				2CB284E7C622E17F5F745C1F /* WindsurfProtobufReader.swift in Sources */,
+				AF66A29EE9EAD5C5C3AE0B63 /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		1D58F5DA7496FEB61F936279 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F351B941995E9DBE02A6F895 /* WindsurfUsageSystray */;
+			targetProxy = D95AC0800C116DF33DA2229E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0B72F66CA4F40FA5006E17CE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Resources/WindsurfUsageSystray.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LSUIElement = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.i-zhirov.windsurf-usage-systray";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		195DEDEDA6127AB50E57BD2A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.i-zhirov.windsurf-usage-systray-tests";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WindsurfUsageSystray.app/Contents/MacOS/WindsurfUsageSystray";
+			};
+			name = Debug;
+		};
+		41822F02C36A7258BBB5C345 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		4480C63BC25DFA2544A77368 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Resources/WindsurfUsageSystray.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LSUIElement = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.i-zhirov.windsurf-usage-systray";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		6C57E72116369C1D3DC7A354 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.i-zhirov.windsurf-usage-systray-tests";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WindsurfUsageSystray.app/Contents/MacOS/WindsurfUsageSystray";
+			};
+			name = Release;
+		};
+		D5F509ECF51F89FC752915CF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		147A7A82BBB8103DE83D58D9 /* Build configuration list for PBXProject "WindsurfUsageSystray" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41822F02C36A7258BBB5C345 /* Debug */,
+				D5F509ECF51F89FC752915CF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AD78D511E78A38C553666E49 /* Build configuration list for PBXNativeTarget "WindsurfUsageSystray" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0B72F66CA4F40FA5006E17CE /* Debug */,
+				4480C63BC25DFA2544A77368 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CDE83EC78B5476BC103C9F24 /* Build configuration list for PBXNativeTarget "WindsurfUsageSystrayTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				195DEDEDA6127AB50E57BD2A /* Debug */,
+				6C57E72116369C1D3DC7A354 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E0C2D3952C6482AF726F7C39 /* Project object */;
+}
