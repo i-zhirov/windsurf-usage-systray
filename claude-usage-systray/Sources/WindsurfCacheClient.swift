@@ -1,5 +1,9 @@
 import Foundation
 
+protocol WindsurfCacheFetching {
+    func fetchSnapshot(settings: AppSettings) throws -> UsageSnapshot
+}
+
 final class WindsurfCacheClient {
     private let decoder = JSONDecoder()
     private let protobufReader = WindsurfProtobufReader()
@@ -89,3 +93,5 @@ final class WindsurfCacheClient {
         value.replacingOccurrences(of: "'", with: "''")
     }
 }
+
+extension WindsurfCacheClient: WindsurfCacheFetching {}

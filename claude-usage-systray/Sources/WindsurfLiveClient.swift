@@ -1,5 +1,9 @@
 import Foundation
 
+protocol WindsurfLiveFetching {
+    func fetchSnapshot(lastUpdated: Date) async throws -> UsageSnapshot
+}
+
 final class WindsurfLiveClient {
     private let discovery: WindsurfProcessDiscovery
     private let session: URLSession
@@ -151,6 +155,8 @@ final class WindsurfLiveClient {
         return "1.108.2"
     }
 }
+
+extension WindsurfLiveClient: WindsurfLiveFetching {}
 
 private struct GetUserStatusRequest: Encodable {
     let metadata: MetadataPayload

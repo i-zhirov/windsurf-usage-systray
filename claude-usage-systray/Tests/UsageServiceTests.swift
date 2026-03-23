@@ -163,6 +163,99 @@ final class WindsurfProcessDiscoveryTests: XCTestCase {
     }
 }
 
+final class UsageServiceCoordinatorTests: XCTestCase {
+
+    func testResolveFetchPrefersLiveWhenEnabled() async throws {
+        let liveSnapshot = UsageSnapshot(
+            dailyQuotaRemainingPercent: 95,
+            weeklyQuotaRemainingPercent: 80,
+            dailyResetAt: nil,
+            weeklyResetAt: nil,
+            planName: "Pro",
+            billingStrategy: "BILLING_STRATEGY_QUOTA",
+            source: .live,
+            lastUpdated: Date(),
+            isStale: false,
+            errorHint: nil
+        )
+
+        let service = UsageService(
+            liveClient: MockLiveClient(result: .success(liveSnapshot)),
+            cacheClient: MockCacheClient(result: .failure(WindsurfFetchError.missingAuthStatus))
+        )
+
+        let resolution = try await service.resolveFetch(settings: makeSettings(preferLiveMode: true))
+
+        XCTAssertEqual(resolution.snapshot.source, .live)
+        XCTAssertNil(resolution.errorMessage)
+    }
+
+    func testResolveFetchFallsBackToCacheWhenLiveFails() async throws {
+        let cacheSnapshot = UsageSnapshot(
+            dailyQuotaRemainingPercent: 88,
+            weeklyQuotaRemainingPercent: 49,
+            dailyResetAt: nil,
+            weeklyResetAt: nil,
+            planName: "Teams",
+            billingStrategy: "BILLING_STRATEGY_QUOTA",
+            source: .cache,
+            lastUpdated: Date(),
+            isStale: false,
+            errorHint: nil
+        )
+
+        let service = UsageService(
+            liveClient: MockLiveClient(result: .failure(WindsurfFetchError.liveRequestFailed("timeout"))),
+            cacheClient: MockCacheClient(result: .success(cacheSnapshot))
+        )
+
+        let resolution = try await service.resolveFetch(settings: makeSettings(preferLiveMode: true))
+
+        XCTAssertEqual(resolution.snapshot.source, .cache)
+        XCTAssertEqual(resolution.errorMessage, "Live data unavailable, showing cached quota: timeout")
+    }
+
+    func testResolveFetchFailsWhenLiveAndCacheFail() async {
+        let service = UsageService(
+            liveClient: MockLiveClient(result: .failure(WindsurfFetchError.liveRequestFailed("live down"))),
+            cacheClient: MockCacheClient(result: .failure(WindsurfFetchError.missingAuthStatus))
+        )
+
+        do {
+            _ = try await service.resolveFetch(settings: makeSettings(preferLiveMode: true))
+            XCTFail("Expected resolveFetch to throw")
+        } catch {
+            XCTAssertEqual(error.localizedDescription, "Live failed: live down. Cache failed: Missing Windsurf auth status")
+        }
+    }
+
+    func testResolveFetchUsesCacheOnlyWhenLiveDisabled() async throws {
+        let cacheSnapshot = UsageSnapshot(
+            dailyQuotaRemainingPercent: 70,
+            weeklyQuotaRemainingPercent: 50,
+            dailyResetAt: nil,
+            weeklyResetAt: nil,
+            planName: nil,
+            billingStrategy: nil,
+            source: .cache,
+            lastUpdated: Date(),
+            isStale: true,
+            errorHint: "Showing cached Windsurf data"
+        )
+
+        let liveClient = MockLiveClient(result: .failure(WindsurfFetchError.liveRequestFailed("should not be used")))
+        let cacheClient = MockCacheClient(result: .success(cacheSnapshot))
+        let service = UsageService(liveClient: liveClient, cacheClient: cacheClient)
+
+        let resolution = try await service.resolveFetch(settings: makeSettings(preferLiveMode: false))
+
+        XCTAssertEqual(resolution.snapshot.source, .cache)
+        XCTAssertNil(resolution.errorMessage)
+        XCTAssertEqual(liveClient.fetchCount, 0)
+        XCTAssertEqual(cacheClient.fetchCount, 1)
+    }
+}
+
 final class UsageSnapshotFormattingTests: XCTestCase {
 
     func testCompactMenuBarFormattingUsesDailyAndWeeklyQuota() {
@@ -264,6 +357,40 @@ private enum ProtobufField {
     case varint(Int, UInt64)
     case string(Int, String)
     case message(Int, Data)
+}
+
+private final class MockLiveClient: WindsurfLiveFetching {
+    private let result: Result<UsageSnapshot, Error>
+    private(set) var fetchCount = 0
+
+    init(result: Result<UsageSnapshot, Error>) {
+        self.result = result
+    }
+
+    func fetchSnapshot(lastUpdated: Date) async throws -> UsageSnapshot {
+        fetchCount += 1
+        return try result.get()
+    }
+}
+
+private final class MockCacheClient: WindsurfCacheFetching {
+    private let result: Result<UsageSnapshot, Error>
+    private(set) var fetchCount = 0
+
+    init(result: Result<UsageSnapshot, Error>) {
+        self.result = result
+    }
+
+    func fetchSnapshot(settings: AppSettings) throws -> UsageSnapshot {
+        fetchCount += 1
+        return try result.get()
+    }
+}
+
+private func makeSettings(preferLiveMode: Bool) -> AppSettings {
+    var settings = AppSettings()
+    settings.preferLiveMode = preferLiveMode
+    return settings
 }
 
 private func protobufMessage(_ fields: [ProtobufField]) -> Data {

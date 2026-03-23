@@ -81,6 +81,12 @@ func formatTimeRemaining(until date: Date, from now: Date = Date()) -> String {
 final class UsageService: ObservableObject {
     static let shared = UsageService()
 
+    struct FetchResolution {
+        let snapshot: UsageSnapshot
+        let errorMessage: String?
+        let nextInterval: TimeInterval
+    }
+
     @Published private(set) var currentUsage: UsageSnapshot = .placeholder
     @Published private(set) var error: String?
     @Published private(set) var isLoading: Bool = false
@@ -95,12 +101,18 @@ final class UsageService: ObservableObject {
 
     // Injectable for testing
     var urlSession: URLSession = .shared
-    var liveClient = WindsurfLiveClient()
-    var cacheClient = WindsurfCacheClient()
+    var liveClient: WindsurfLiveFetching
+    var cacheClient: WindsurfCacheFetching
 
     private var cachedToken: String?
 
-    private init() {}
+    init(
+        liveClient: WindsurfLiveFetching = WindsurfLiveClient(),
+        cacheClient: WindsurfCacheFetching = WindsurfCacheClient()
+    ) {
+        self.liveClient = liveClient
+        self.cacheClient = cacheClient
+    }
 
     private func accessToken() throws -> String {
         if let token = cachedToken { return token }
@@ -133,47 +145,13 @@ final class UsageService: ObservableObject {
             let settings = await MainActor.run { SettingsManager.shared.settings }
 
             do {
-                if settings.preferLiveMode {
-                    do {
-                        let snapshot = try await liveClient.fetchSnapshot()
-
-                        await MainActor.run {
-                            self.currentUsage = snapshot
-                            self.error = nil
-                            self.isLoading = false
-                            self.scheduleTimer(interval: self.liveRefreshInterval)
-                        }
-                        return
-                    } catch {
-                        let liveError = error.localizedDescription
-
-                        do {
-                            let snapshot = try cacheClient.fetchSnapshot(settings: settings)
-
-                            await MainActor.run {
-                                self.currentUsage = snapshot
-                                self.error = "Live data unavailable, showing cached quota: \(liveError)"
-                                self.isLoading = false
-                                self.scheduleTimer(interval: self.cacheRefreshInterval)
-                            }
-                            return
-                        } catch {
-                            throw NSError(
-                                domain: "WindsurfUsage",
-                                code: 1,
-                                userInfo: [NSLocalizedDescriptionKey: "Live failed: \(liveError). Cache failed: \(error.localizedDescription)"]
-                            )
-                        }
-                    }
-                }
-
-                let snapshot = try cacheClient.fetchSnapshot(settings: settings)
+                let resolution = try await resolveFetch(settings: settings)
 
                 await MainActor.run {
-                    self.currentUsage = snapshot
-                    self.error = nil
+                    self.currentUsage = resolution.snapshot
+                    self.error = resolution.errorMessage
                     self.isLoading = false
-                    self.scheduleTimer(interval: self.cacheRefreshInterval)
+                    self.scheduleTimer(interval: resolution.nextInterval)
                 }
             } catch {
                 await MainActor.run {
@@ -183,6 +161,43 @@ final class UsageService: ObservableObject {
                 }
             }
         }
+    }
+
+    func resolveFetch(settings: AppSettings) async throws -> FetchResolution {
+        if settings.preferLiveMode {
+            do {
+                let snapshot = try await liveClient.fetchSnapshot(lastUpdated: Date())
+                return FetchResolution(
+                    snapshot: snapshot,
+                    errorMessage: nil,
+                    nextInterval: liveRefreshInterval
+                )
+            } catch {
+                let liveError = error.localizedDescription
+
+                do {
+                    let snapshot = try cacheClient.fetchSnapshot(settings: settings)
+                    return FetchResolution(
+                        snapshot: snapshot,
+                        errorMessage: "Live data unavailable, showing cached quota: \(liveError)",
+                        nextInterval: cacheRefreshInterval
+                    )
+                } catch {
+                    throw NSError(
+                        domain: "WindsurfUsage",
+                        code: 1,
+                        userInfo: [NSLocalizedDescriptionKey: "Live failed: \(liveError). Cache failed: \(error.localizedDescription)"]
+                    )
+                }
+            }
+        }
+
+        let snapshot = try cacheClient.fetchSnapshot(settings: settings)
+        return FetchResolution(
+            snapshot: snapshot,
+            errorMessage: nil,
+            nextInterval: cacheRefreshInterval
+        )
     }
 
     func fetchOAuthUsage(accessToken: String) async throws -> OAuthUsageResponse {
