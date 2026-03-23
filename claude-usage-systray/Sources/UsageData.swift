@@ -53,16 +53,6 @@ struct UsageSnapshot {
     var compactMenuBarText: String { "D\(dailyQuotaRemainingPercent) · W\(weeklyQuotaRemainingPercent)" }
     var sourceLabelText: String { source.displayName }
 
-    // Temporary compatibility layer for still-unmigrating UI.
-    var fiveHourUtilization: Int { dailyQuotaUsedPercent }
-    var sevenDayUtilization: Int { weeklyQuotaUsedPercent }
-    var sevenDaySonnetUtilization: Int? { nil }
-    var fiveHourResetIn: String? { dailyResetIn }
-    var sevenDayResetIn: String? { weeklyResetIn }
-    var weeklySessions: Int { 0 }
-    var weeklyMessages: Int { 0 }
-    var weeklyTokens: Int { 0 }
-
     init(
         dailyQuotaRemainingPercent: Int,
         weeklyQuotaRemainingPercent: Int,
@@ -85,38 +75,6 @@ struct UsageSnapshot {
         self.lastUpdated = lastUpdated
         self.isStale = isStale
         self.errorHint = errorHint
-    }
-
-    init(
-        fiveHourUtilization: Int,
-        sevenDayUtilization: Int,
-        sevenDaySonnetUtilization: Int?,
-        fiveHourResetIn: String?,
-        sevenDayResetIn: String?,
-        lastUpdated: Date,
-        weeklySessions: Int,
-        weeklyMessages: Int,
-        weeklyTokens: Int
-    ) {
-        _ = sevenDaySonnetUtilization
-        _ = fiveHourResetIn
-        _ = sevenDayResetIn
-        _ = weeklySessions
-        _ = weeklyMessages
-        _ = weeklyTokens
-
-        self.init(
-            dailyQuotaRemainingPercent: max(0, 100 - fiveHourUtilization),
-            weeklyQuotaRemainingPercent: max(0, 100 - sevenDayUtilization),
-            dailyResetAt: nil,
-            weeklyResetAt: nil,
-            planName: nil,
-            billingStrategy: nil,
-            source: .unavailable,
-            lastUpdated: lastUpdated,
-            isStale: false,
-            errorHint: nil
-        )
     }
 
     static var placeholder: UsageSnapshot {

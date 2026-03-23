@@ -279,27 +279,9 @@ final class UsageSnapshotFormattingTests: XCTestCase {
         XCTAssertEqual(snapshot.sourceLabelText, "Cached")
         XCTAssertEqual(snapshot.dailyResetIn, "now")
         XCTAssertEqual(snapshot.weeklyResetIn, "now")
+        XCTAssertEqual(snapshot.dailyQuotaUsedPercent, 12)
+        XCTAssertEqual(snapshot.weeklyQuotaUsedPercent, 51)
         XCTAssertEqual(snapshot.errorHint, "Showing cached Windsurf data")
-    }
-
-    func testLegacyInitializerMapsUsedPercentBackToRemainingPercent() {
-        let snapshot = UsageSnapshot(
-            fiveHourUtilization: 12,
-            sevenDayUtilization: 51,
-            sevenDaySonnetUtilization: nil,
-            fiveHourResetIn: nil,
-            sevenDayResetIn: nil,
-            lastUpdated: Date(timeIntervalSince1970: 1_700_000_000),
-            weeklySessions: 0,
-            weeklyMessages: 0,
-            weeklyTokens: 0
-        )
-
-        XCTAssertEqual(snapshot.dailyQuotaRemainingPercent, 88)
-        XCTAssertEqual(snapshot.weeklyQuotaRemainingPercent, 49)
-        XCTAssertEqual(snapshot.fiveHourUtilization, 12)
-        XCTAssertEqual(snapshot.sevenDayUtilization, 51)
-        XCTAssertEqual(snapshot.source, .unavailable)
     }
 }
 

@@ -90,9 +90,6 @@ final class UsageService: ObservableObject {
     @Published private(set) var currentUsage: UsageSnapshot = .placeholder
     @Published private(set) var error: String?
     @Published private(set) var isLoading: Bool = false
-    @Published private(set) var weeklySessions: Int = 0
-    @Published private(set) var weeklyMessages: Int = 0
-    @Published private(set) var weeklyTokens: Int = 0
 
     private var refreshTimer: Timer?
     private let liveRefreshInterval: TimeInterval = 90
