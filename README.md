@@ -21,6 +21,7 @@ Colors update from your configured warning and critical thresholds.
 
 - macOS 13+
 - Windsurf installed
+- Apple Silicon and Intel Macs are supported
 - for live mode: Windsurf should be running
 
 ## How it works
@@ -33,6 +34,11 @@ The app uses two local data sources:
 The app prefers live data when possible and falls back to cached local state when Windsurf is not running or the live request fails.
 
 Windsurf requires a dual-source local-first design because of lack of public API for remaining quota and live quota is best obtained from the authenticated local language server, while cached local state provides a safe fallback.
+
+For live mode discovery, the app supports both macOS Windsurf language server variants:
+
+- `language_server_macos_arm`
+- `language_server_macos_x64`
 
 ## Display modes
 
