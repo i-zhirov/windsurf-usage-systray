@@ -61,7 +61,7 @@ Toggle **Compact display** in Settings to switch between:
 ## Build from source
 
 ```bash
-git clone https://github.com/adntgv/claude-usage-systray
+git clone https://github.com/i-zhirov/claude-usage-systray
 cd claude-usage-systray/claude-usage-systray
 xcodebuild -scheme ClaudeUsageSystray -configuration Release build
 open ~/Library/Developer/Xcode/DerivedData/ClaudeUsageSystray-*/Build/Products/Release/ClaudeUsageSystray.app

@@ -90,14 +90,14 @@ jobs:
           VERSION=${TAG#v}
           SHA=$(shasum -a 256 claude-usage-systray/WindsurfUsageSystray.zip | awk '{print $1}')
 
-          FORMULA="cask \"claude-usage-systray\" do
+          FORMULA="cask \"windsurf-usage-systray\" do
             version \"$VERSION\"
             sha256 \"$SHA\"
 
-            url \"https://github.com/adntgv/claude-usage-systray/releases/download/v#{version}/WindsurfUsageSystray.zip\"
+            url \"https://github.com/i-zhirov/claude-usage-systray/releases/download/v#{version}/WindsurfUsageSystray.zip\"
             name \"Windsurf Usage Systray\"
             desc \"macOS menu bar app showing Windsurf quota in real time\"
-            homepage \"https://github.com/adntgv/claude-usage-systray\"
+            homepage \"https://github.com/i-zhirov/claude-usage-systray\"
 
             app \"WindsurfUsageSystray.app\"
 
@@ -112,11 +112,11 @@ jobs:
           # Get current file SHA (needed for update)
           CURRENT=$(curl -s \
             -H "Authorization: token $HOMEBREW_TAP_TOKEN" \
-            https://api.github.com/repos/adntgv/homebrew-tap/contents/Casks/claude-usage-systray.rb)
+            https://api.github.com/repos/i-zhirov/homebrew-tap/contents/Casks/windsurf-usage-systray.rb)
           FILE_SHA=$(echo "$CURRENT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('sha',''))")
 
           curl -s -X PUT \
             -H "Authorization: token $HOMEBREW_TAP_TOKEN" \
             -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/adntgv/homebrew-tap/contents/Casks/claude-usage-systray.rb \
-            -d "{\"message\":\"Update claude-usage-systray to $VERSION\",\"content\":\"$ENCODED\",\"sha\":\"$FILE_SHA\"}"
+            https://api.github.com/repos/i-zhirov/homebrew-tap/contents/Casks/windsurf-usage-systray.rb \
+            -d "{\"message\":\"Update windsurf-usage-systray to $VERSION\",\"content\":\"$ENCODED\",\"sha\":\"$FILE_SHA\"}"
