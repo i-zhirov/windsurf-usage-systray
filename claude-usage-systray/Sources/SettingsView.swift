@@ -14,6 +14,7 @@ struct SettingsView: View {
     @State private var showSourceInPopover: Bool = true
     @State private var showUsedInsteadOfRemaining: Bool = false
     @State private var refreshOnPopoverOpen: Bool = false
+    @State private var refreshIntervalMinutes: Double = 2
 
     var body: some View {
         VStack(spacing: 0) {
@@ -62,6 +63,14 @@ struct SettingsView: View {
                         .onChange(of: refreshOnPopoverOpen) { newValue in
                             settingsManager.setRefreshOnPopoverOpen(newValue)
                         }
+
+                    VStack(alignment: .leading) {
+                        Text("Refresh interval: \(Int(refreshIntervalMinutes)) min")
+                        Slider(value: $refreshIntervalMinutes, in: 1...10, step: 1)
+                            .onChange(of: refreshIntervalMinutes) { newValue in
+                                settingsManager.setRefreshIntervalMinutes(Int(newValue))
+                            }
+                    }
                 }
 
                 Section("Notifications") {
@@ -138,6 +147,7 @@ struct SettingsView: View {
         showSourceInPopover = settingsManager.settings.showSourceInPopover
         showUsedInsteadOfRemaining = settingsManager.settings.showUsedInsteadOfRemaining
         refreshOnPopoverOpen = settingsManager.settings.refreshOnPopoverOpen
+        refreshIntervalMinutes = Double(settingsManager.settings.refreshIntervalMinutes)
     }
 
     private func resetToDefaults() {

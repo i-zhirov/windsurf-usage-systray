@@ -10,6 +10,7 @@ struct AppSettings: Codable {
     var cacheStaleAfterMinutes: Int = 15
     var showUsedInsteadOfRemaining: Bool = false
     var refreshOnPopoverOpen: Bool = false
+    var refreshIntervalMinutes: Int = 2
 
     var isConfigured: Bool { true }
 }

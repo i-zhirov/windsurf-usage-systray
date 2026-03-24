@@ -43,9 +43,12 @@ final class UsageService: ObservableObject {
 
     private var refreshTimer: Timer?
     private var fetchTask: Task<Void, Never>?
-    private let liveRefreshInterval: TimeInterval = 90
-    private let cacheRefreshInterval: TimeInterval = 5 * 60
     private let failureRetryInterval: TimeInterval = 60
+    private let settingsManager = SettingsManager.shared
+
+    private var refreshInterval: TimeInterval {
+        TimeInterval(settingsManager.settings.refreshIntervalMinutes * 60)
+    }
 
     // Injectable for testing
     var urlSession: URLSession = .shared
@@ -81,7 +84,7 @@ final class UsageService: ObservableObject {
 
     func startPolling() {
         fetchUsage()
-        scheduleTimer(interval: cacheRefreshInterval)
+        scheduleTimer(interval: refreshInterval)
     }
 
     func stopPolling() {
@@ -153,7 +156,7 @@ final class UsageService: ObservableObject {
                 return FetchResolution(
                     snapshot: snapshot,
                     errorMessage: nil,
-                    nextInterval: liveRefreshInterval
+                    nextInterval: refreshInterval
                 )
             } catch {
                 let liveError = error.localizedDescription
@@ -165,7 +168,7 @@ final class UsageService: ObservableObject {
                     return FetchResolution(
                         snapshot: snapshot,
                         errorMessage: "Live data unavailable, showing cached quota: \(liveError)",
-                        nextInterval: cacheRefreshInterval
+                        nextInterval: refreshInterval
                     )
                 } catch {
                     debugLog("resolve cache fallback failed: \(error.localizedDescription)")
@@ -183,7 +186,7 @@ final class UsageService: ObservableObject {
         return FetchResolution(
             snapshot: snapshot,
             errorMessage: nil,
-            nextInterval: cacheRefreshInterval
+            nextInterval: refreshInterval
         )
     }
 
