@@ -96,8 +96,16 @@ struct UsageSnapshot {
         let interval = date.timeIntervalSince(now)
         if interval <= 0 { return "now" }
 
-        let hours = Int(interval) / 3600
+        let days = Int(interval) / 86400
+        let hours = (Int(interval) % 86400) / 3600
         let minutes = (Int(interval) % 3600) / 60
-        return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
+
+        if days > 0 {
+            return "\(days)d \(hours)h \(minutes)m"
+        } else if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        } else {
+            return "\(minutes)m"
+        }
     }
 }
