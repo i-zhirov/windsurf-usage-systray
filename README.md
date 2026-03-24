@@ -2,7 +2,7 @@
 
 A lightweight macOS menu bar app that shows your Windsurf quota without opening the editor or a browser.
 
-![Windsurf Usage Systray](claude-usage-systray/Resources/Assets.xcassets/Image.imageset/Image.png)
+![Windsurf Usage Systray](windsurf-usage-systray/Resources/Assets.xcassets/Image.imageset/Image.png)
 
 ## What it shows
 
@@ -42,10 +42,10 @@ For live mode discovery, the app supports both macOS Windsurf language server va
 
 ## Display modes
 
-Toggle **Compact display** in Settings to switch between:
+Toggle **Show both quotas** in Settings to switch between:
 
-- **Compact (default):** `D88 · W49`
-- **Normal:** icon + weekly remaining percentage
+- **Both quotas (default):** `83% • 77%` (daily • weekly)
+- **Daily only:** icon + daily remaining percentage
 
 ## Settings
 
@@ -53,16 +53,20 @@ Toggle **Compact display** in Settings to switch between:
 |---------|---------|-------------|
 | Prefer live Windsurf data | On | Use the local Windsurf language server first |
 | Show source in popover | On | Show whether data is live or cached |
-| Compact display | On | Show daily and weekly quota in the menu bar |
+| Show both quotas | On | Show daily and weekly quota in the menu bar |
+| Show used instead of remaining | Off | Display used percentage instead of remaining |
+| Refresh on popover open | Off | Refresh data when opening the popover |
+| Refresh interval | 2 min | How often to refresh quota data |
 | Warning threshold | 80% | Orange when weekly used quota crosses this |
 | Critical threshold | 90% | Red when weekly used quota crosses this |
 | Quota alerts | On | macOS notification when thresholds are crossed |
+| Killswitch | Off | Kill Windsurf AI when quota drops to threshold (Live mode only) |
 
 ## Build from source
 
 ```bash
 git clone https://github.com/i-zhirov/windsurf-usage-systray
-cd claude-usage-systray/claude-usage-systray
+cd windsurf-usage-systray/windsurf-usage-systray
 xcodebuild -project WindsurfUsageSystray.xcodeproj -scheme WindsurfUsageSystray -configuration Release \
   -derivedDataPath /tmp/ws-build-dd build
 open ~/Library/Developer/Xcode/DerivedData/WindsurfUsageSystray-*/Build/Products/Release/WindsurfUsageSystray.app
