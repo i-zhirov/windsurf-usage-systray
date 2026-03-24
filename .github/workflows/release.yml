@@ -40,7 +40,7 @@ jobs:
 
       - name: Archive
         run: |
-          cd claude-usage-systray
+          cd windsurf-usage-systray
           xcodebuild \
             -project WindsurfUsageSystray.xcodeproj \
             -scheme WindsurfUsageSystray \
@@ -50,7 +50,7 @@ jobs:
 
       - name: Export (Developer ID signed)
         run: |
-          cd claude-usage-systray
+          cd windsurf-usage-systray
           xcodebuild -exportArchive \
             -archivePath build/WindsurfUsageSystray.xcarchive \
             -exportPath build/export \
@@ -62,7 +62,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: |
-          cd claude-usage-systray
+          cd windsurf-usage-systray
           ditto -c -k --keepParent build/export/WindsurfUsageSystray.app WindsurfUsageSystray.zip
           xcrun notarytool submit WindsurfUsageSystray.zip \
             --apple-id "$APPLE_ID" \
@@ -72,14 +72,14 @@ jobs:
 
       - name: Staple
         run: |
-          cd claude-usage-systray
+          cd windsurf-usage-systray
           xcrun stapler staple build/export/WindsurfUsageSystray.app
           ditto -c -k --keepParent build/export/WindsurfUsageSystray.app WindsurfUsageSystray.zip
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: claude-usage-systray/WindsurfUsageSystray.zip
+          files: windsurf-usage-systray/WindsurfUsageSystray.zip
           generate_release_notes: true
 
       - name: Update Homebrew tap
@@ -88,7 +88,7 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           VERSION=${TAG#v}
-          SHA=$(shasum -a 256 claude-usage-systray/WindsurfUsageSystray.zip | awk '{print $1}')
+          SHA=$(shasum -a 256 windsurf-usage-systray/WindsurfUsageSystray.zip | awk '{print $1}')
 
           FORMULA="cask \"windsurf-usage-systray\" do
             version \"$VERSION\"
