@@ -103,8 +103,9 @@ struct SettingsView: View {
                         .onChange(of: killswitchEnabled) { newValue in
                             settingsManager.setKillswitchEnabled(newValue)
                         }
+                        .disabled(!preferLiveMode)
 
-                    if killswitchEnabled {
+                    if killswitchEnabled && preferLiveMode {
                         VStack(alignment: .leading) {
                             Text("Trigger at: \(Int(killswitchThreshold))% remaining")
                             Slider(value: $killswitchThreshold, in: 0...20, step: 1)
@@ -112,11 +113,13 @@ struct SettingsView: View {
                                     settingsManager.setKillswitchThreshold(Int(newValue))
                                 }
                         }
-
-                        Text("Kills Windsurf AI when daily or weekly quota drops to threshold")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
                     }
+
+                    Text(preferLiveMode
+                        ? "Kills Windsurf AI when daily or weekly quota drops to threshold."
+                        : "Killswitch requires Live mode to be enabled.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
             }
             .formStyle(.grouped)

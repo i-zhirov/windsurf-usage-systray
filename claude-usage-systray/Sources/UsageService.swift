@@ -308,7 +308,7 @@ final class UsageService: ObservableObject {
     private func checkKillswitch(snapshot: UsageSnapshot, settings: AppSettings) {
         guard settings.killswitchEnabled else { return }
         guard !killswitchTriggeredThisSession else { return }
-        guard snapshot.source != .unavailable else { return }
+        guard snapshot.source == .live else { return }
 
         let threshold = settings.killswitchThreshold
         let dailyRemaining = snapshot.dailyQuotaRemainingPercent
