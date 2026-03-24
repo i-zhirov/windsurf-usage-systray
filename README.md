@@ -4,6 +4,13 @@ A lightweight macOS menu bar app that shows your Windsurf quota without opening 
 
 ![Windsurf Usage Systray](windsurf-usage-systray/Resources/Assets.xcassets/Image.imageset/Image.png)
 
+## Installation
+
+```bash
+brew tap i-zhirov/tap
+brew install --cask windsurf-usage-systray
+```
+
 ## What it shows
 
 The app focuses on the Windsurf quota model:
