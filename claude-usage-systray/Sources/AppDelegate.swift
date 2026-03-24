@@ -163,7 +163,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.image = nil
             button.title = "\(dailyValue)% • \(weeklyValue)%"
         } else {
-            button.image = nil
+            button.image = statusSymbolImage(named: "gauge.with.dots.needle.33percent")
             button.title = "\(dailyValue)%"
         }
     }
