@@ -145,6 +145,17 @@ struct MenuBarView: View {
 
     private var actionButtons: some View {
         VStack(spacing: 0) {
+            Button(action: openDashboard) {
+                HStack {
+                    Image(systemName: "chart.bar")
+                    Text("Open Dashboard")
+                    Spacer()
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+
             Button(action: refreshUsage) {
                 HStack {
                     Image(systemName: "arrow.clockwise")
@@ -213,6 +224,12 @@ struct MenuBarView: View {
 
     private func refreshUsage() {
         usageService.fetchUsage()
+    }
+
+    private func openDashboard() {
+        if let url = URL(string: "https://windsurf.com/subscription/usage") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     private func quitApp() {
