@@ -322,22 +322,7 @@ final class UsageService: ObservableObject {
     }
 
     private func triggerKillswitch(dailyRemaining: Int, weeklyRemaining: Int, threshold: Int) {
-        let quotaType = dailyRemaining <= threshold ? "Daily" : "Weekly"
-        let remaining = dailyRemaining <= threshold ? dailyRemaining : weeklyRemaining
-
-        let alert = NSAlert()
-        alert.messageText = "Windsurf AI Killswitch"
-        alert.informativeText = "\(quotaType) quota is at \(remaining)% (threshold: \(threshold)%).\n\nKill Windsurf AI process to prevent further usage?"
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "Kill AI")
-        alert.addButton(withTitle: "Cancel")
-
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            killLanguageServer()
-        } else {
-            killswitchTriggeredThisSession = false
-        }
+        killLanguageServer()
     }
 
     private func killLanguageServer() {
@@ -357,7 +342,7 @@ final class UsageService: ObservableObject {
     private func sendKillNotification() {
         let content = UNMutableNotificationContent()
         content.title = "Windsurf AI Disabled"
-        content.body = "Language server process terminated due to quota limit."
+        content.body = "Quota limit reached. Agent features will not work until Windsurf is restarted."
         content.sound = .default
 
         let request = UNNotificationRequest(
