@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var compactDisplay: Bool = true
     @State private var preferLiveMode: Bool = true
     @State private var showSourceInPopover: Bool = true
+    @State private var showUsedInsteadOfRemaining: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -46,9 +47,14 @@ struct SettingsView: View {
                 }
 
                 Section("Menu Bar") {
-                    Toggle("Compact display (D · W)", isOn: $compactDisplay)
+                    Toggle("Compact display (daily • weekly)", isOn: $compactDisplay)
                         .onChange(of: compactDisplay) { newValue in
                             settingsManager.setCompactDisplay(newValue)
+                        }
+
+                    Toggle("Show used instead of remaining", isOn: $showUsedInsteadOfRemaining)
+                        .onChange(of: showUsedInsteadOfRemaining) { newValue in
+                            settingsManager.setShowUsedInsteadOfRemaining(newValue)
                         }
                 }
 
@@ -124,6 +130,7 @@ struct SettingsView: View {
         compactDisplay = settingsManager.settings.compactDisplay
         preferLiveMode = settingsManager.settings.preferLiveMode
         showSourceInPopover = settingsManager.settings.showSourceInPopover
+        showUsedInsteadOfRemaining = settingsManager.settings.showUsedInsteadOfRemaining
     }
 
     private func resetToDefaults() {

@@ -8,6 +8,7 @@ struct AppSettings: Codable {
     var preferLiveMode: Bool = true
     var showSourceInPopover: Bool = true
     var cacheStaleAfterMinutes: Int = 15
+    var showUsedInsteadOfRemaining: Bool = false
 
     var isConfigured: Bool { true }
 }

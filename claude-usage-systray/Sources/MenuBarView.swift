@@ -32,12 +32,27 @@ struct MenuBarView: View {
         }
     }
 
+    private var showUsed: Bool {
+        settingsManager.settings.showUsedInsteadOfRemaining
+    }
+
+    private var quotaModeLabel: String {
+        showUsed ? "Used quota" : "Remaining quota"
+    }
+
     private var usageHeader: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
+                Text(quotaModeLabel)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+
+            HStack {
                 Image(systemName: usageIconName)
                     .foregroundColor(usageColor)
-                Text("Daily: \(usageService.currentUsage.dailyQuotaRemainingPercent)%")
+                Text("Daily: \(showUsed ? usageService.currentUsage.dailyQuotaUsedPercent : usageService.currentUsage.dailyQuotaRemainingPercent)%")
                     .fontWeight(.medium)
                 Spacer()
                 if let timeLeft = usageService.currentUsage.dailyResetIn {
@@ -50,7 +65,7 @@ struct MenuBarView: View {
             HStack {
                 Image(systemName: "calendar")
                     .foregroundColor(weeklyColor)
-                Text("Weekly: \(usageService.currentUsage.weeklyQuotaRemainingPercent)%")
+                Text("Weekly: \(showUsed ? usageService.currentUsage.weeklyQuotaUsedPercent : usageService.currentUsage.weeklyQuotaRemainingPercent)%")
                     .fontWeight(.medium)
                 Spacer()
                 if let timeLeft = usageService.currentUsage.weeklyResetIn {

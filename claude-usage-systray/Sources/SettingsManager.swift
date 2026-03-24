@@ -36,5 +36,6 @@ final class SettingsManager: ObservableObject {
     func setPreferLiveMode(_ enabled: Bool) { settings.preferLiveMode = enabled }
     func setShowSourceInPopover(_ enabled: Bool) { settings.showSourceInPopover = enabled }
     func setCacheStaleAfterMinutes(_ minutes: Int) { settings.cacheStaleAfterMinutes = minutes }
+    func setShowUsedInsteadOfRemaining(_ enabled: Bool) { settings.showUsedInsteadOfRemaining = enabled }
     func resetToDefaults() { settings = AppSettings() }
 }

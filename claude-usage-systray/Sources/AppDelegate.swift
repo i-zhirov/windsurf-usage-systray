@@ -151,15 +151,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        let dailyRemaining = snapshot.dailyQuotaRemainingPercent
-        let weeklyRemaining = snapshot.weeklyQuotaRemainingPercent
+        let showUsed = settingsManager.settings.showUsedInsteadOfRemaining
+        let dailyValue = showUsed ? snapshot.dailyQuotaUsedPercent : snapshot.dailyQuotaRemainingPercent
+        let weeklyValue = showUsed ? snapshot.weeklyQuotaUsedPercent : snapshot.weeklyQuotaRemainingPercent
 
         if settingsManager.settings.compactDisplay {
             button.image = nil
-            button.title = "\(dailyRemaining)% • \(weeklyRemaining)%"
+            button.title = "\(dailyValue)% • \(weeklyValue)%"
         } else {
             button.image = nil
-            button.title = "\(weeklyRemaining)%"
+            button.title = "\(weeklyValue)%"
         }
     }
 
