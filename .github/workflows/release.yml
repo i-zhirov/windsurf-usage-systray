@@ -15,66 +15,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Import Developer ID certificate
-        env:
-          CERTIFICATE_PART1: ${{ secrets.APPLE_CERTIFICATE_1 }}
-          CERTIFICATE_PART2: ${{ secrets.APPLE_CERTIFICATE_2 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-        run: |
-          KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
-          KEYCHAIN_PASSWORD=$(openssl rand -hex 16)
-
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-
-          echo "${CERTIFICATE_PART1}${CERTIFICATE_PART2}" | base64 --decode -o "$RUNNER_TEMP/cert.p12"
-          security import "$RUNNER_TEMP/cert.p12" \
-            -k "$KEYCHAIN_PATH" \
-            -P "$CERTIFICATE_PASSWORD" \
-            -T /usr/bin/codesign \
-            -T /usr/bin/security
-
-          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
-          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-
-      - name: Archive
+      - name: Build
         run: |
           cd windsurf-usage-systray
           xcodebuild \
             -project WindsurfUsageSystray.xcodeproj \
             -scheme WindsurfUsageSystray \
             -configuration Release \
-            -archivePath build/WindsurfUsageSystray.xcarchive \
-            archive
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
 
-      - name: Export (Developer ID signed)
+      - name: Package
         run: |
           cd windsurf-usage-systray
-          xcodebuild -exportArchive \
-            -archivePath build/WindsurfUsageSystray.xcarchive \
-            -exportPath build/export \
-            -exportOptionsPlist ExportOptions.plist
-
-      - name: Notarize
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-        run: |
-          cd windsurf-usage-systray
-          ditto -c -k --keepParent build/export/WindsurfUsageSystray.app WindsurfUsageSystray.zip
-          xcrun notarytool submit WindsurfUsageSystray.zip \
-            --apple-id "$APPLE_ID" \
-            --team-id "$APPLE_TEAM_ID" \
-            --password "$APPLE_APP_PASSWORD" \
-            --wait
-
-      - name: Staple
-        run: |
-          cd windsurf-usage-systray
-          xcrun stapler staple build/export/WindsurfUsageSystray.app
-          ditto -c -k --keepParent build/export/WindsurfUsageSystray.app WindsurfUsageSystray.zip
+          ditto -c -k --keepParent \
+            build/Build/Products/Release/WindsurfUsageSystray.app \
+            WindsurfUsageSystray.zip
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

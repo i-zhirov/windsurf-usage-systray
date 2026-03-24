@@ -24,6 +24,24 @@ Colors update from your configured warning and critical thresholds.
 - Apple Silicon and Intel Macs are supported
 - for live mode: Windsurf should be running
 
+## First launch
+
+The app is not signed with an Apple Developer certificate. On first launch, macOS will show a warning:
+
+> "WindsurfUsageSystray" can't be opened because Apple cannot check it for malicious software.
+
+To allow the app:
+
+1. Open **System Settings → Privacy & Security**
+2. Scroll down and click **Open Anyway**
+3. Confirm in the dialog
+
+Or remove the quarantine attribute via Terminal:
+
+```bash
+xattr -d com.apple.quarantine /Applications/WindsurfUsageSystray.app
+```
+
 ## How it works
 
 The app uses two local data sources:
