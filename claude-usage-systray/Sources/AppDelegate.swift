@@ -29,6 +29,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.checkForNotifications()
             }
             .store(in: &cancellables)
+
+        // Observe settings changes to update menu bar appearance
+        settingsManager.$settings
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.updateStatusItemAppearance()
+            }
+            .store(in: &cancellables)
         
         NotificationCenter.default.addObserver(
             self,
@@ -58,8 +66,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         if let button = statusItem.button {
-            button.image = statusSymbolImage(named: "gauge.with.dots.needle.33percent")
-            button.title = "WS"
+            button.title = "..."
             button.action = #selector(togglePopover)
             button.target = self
         }
@@ -133,36 +140,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let snapshot = usageService.currentUsage
         if usageService.isLoading, snapshot.source == .unavailable {
-            button.image = statusSymbolImage(named: "hourglass")
-            button.title = " ..."
-            button.attributedTitle = NSAttributedString(string: "")
+            button.image = nil
+            button.title = "..."
             return
         }
 
         if snapshot.source == .unavailable {
-            button.image = statusSymbolImage(named: "exclamationmark.triangle")
-            button.title = " --"
-            button.attributedTitle = NSAttributedString(string: "")
+            button.image = nil
+            button.title = "--"
             return
         }
 
+        let dailyRemaining = snapshot.dailyQuotaRemainingPercent
         let weeklyRemaining = snapshot.weeklyQuotaRemainingPercent
-        let weeklyUsed = snapshot.weeklyQuotaUsedPercent
 
         if settingsManager.settings.compactDisplay {
-            button.image = statusSymbolImage(named: "gauge.with.dots.needle.33percent")
-            button.title = " D\(snapshot.dailyQuotaRemainingPercent) W\(weeklyRemaining)"
-            button.attributedTitle = NSAttributedString(string: "")
+            button.image = nil
+            button.title = "\(dailyRemaining)% • \(weeklyRemaining)%"
         } else {
-            let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
-            let symbolName: String
-            if weeklyUsed >= 90 { symbolName = "exclamationmark.triangle.fill" }
-            else if weeklyUsed >= 75 { symbolName = "gauge.with.dots.needle.100percent" }
-            else { symbolName = "gauge.with.dots.needle.33percent" }
-
-            button.image = statusSymbolImage(named: symbolName)?.withSymbolConfiguration(config)
-            button.title = " \(weeklyRemaining)%"
-            button.attributedTitle = NSAttributedString(string: "")
+            button.image = nil
+            button.title = "\(weeklyRemaining)%"
         }
     }
 
