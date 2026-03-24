@@ -9,6 +9,7 @@ struct AppSettings: Codable {
     var showSourceInPopover: Bool = true
     var cacheStaleAfterMinutes: Int = 15
     var showUsedInsteadOfRemaining: Bool = false
+    var refreshOnPopoverOpen: Bool = false
 
     var isConfigured: Bool { true }
 }

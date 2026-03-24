@@ -115,6 +115,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let button = statusItem.button {
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             NSApp.activate(ignoringOtherApps: true)
+
+            if settingsManager.settings.refreshOnPopoverOpen {
+                usageService.fetchUsage()
+            }
         }
     }
 

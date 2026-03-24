@@ -13,6 +13,7 @@ struct SettingsView: View {
     @State private var preferLiveMode: Bool = true
     @State private var showSourceInPopover: Bool = true
     @State private var showUsedInsteadOfRemaining: Bool = false
+    @State private var refreshOnPopoverOpen: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -55,6 +56,11 @@ struct SettingsView: View {
                     Toggle("Show used instead of remaining", isOn: $showUsedInsteadOfRemaining)
                         .onChange(of: showUsedInsteadOfRemaining) { newValue in
                             settingsManager.setShowUsedInsteadOfRemaining(newValue)
+                        }
+
+                    Toggle("Refresh on popover open", isOn: $refreshOnPopoverOpen)
+                        .onChange(of: refreshOnPopoverOpen) { newValue in
+                            settingsManager.setRefreshOnPopoverOpen(newValue)
                         }
                 }
 
@@ -131,6 +137,7 @@ struct SettingsView: View {
         preferLiveMode = settingsManager.settings.preferLiveMode
         showSourceInPopover = settingsManager.settings.showSourceInPopover
         showUsedInsteadOfRemaining = settingsManager.settings.showUsedInsteadOfRemaining
+        refreshOnPopoverOpen = settingsManager.settings.refreshOnPopoverOpen
     }
 
     private func resetToDefaults() {
