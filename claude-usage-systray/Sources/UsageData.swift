@@ -11,6 +11,8 @@ struct AppSettings: Codable {
     var showUsedInsteadOfRemaining: Bool = false
     var refreshOnPopoverOpen: Bool = false
     var refreshIntervalMinutes: Int = 2
+    var killswitchEnabled: Bool = false
+    var killswitchThreshold: Int = 0
 
     var isConfigured: Bool { true }
 }

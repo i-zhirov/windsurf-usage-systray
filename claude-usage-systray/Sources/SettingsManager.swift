@@ -39,5 +39,7 @@ final class SettingsManager: ObservableObject {
     func setShowUsedInsteadOfRemaining(_ enabled: Bool) { settings.showUsedInsteadOfRemaining = enabled }
     func setRefreshOnPopoverOpen(_ enabled: Bool) { settings.refreshOnPopoverOpen = enabled }
     func setRefreshIntervalMinutes(_ minutes: Int) { settings.refreshIntervalMinutes = minutes }
+    func setKillswitchEnabled(_ enabled: Bool) { settings.killswitchEnabled = enabled }
+    func setKillswitchThreshold(_ threshold: Int) { settings.killswitchThreshold = threshold }
     func resetToDefaults() { settings = AppSettings() }
 }

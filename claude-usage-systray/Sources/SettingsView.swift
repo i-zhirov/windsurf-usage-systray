@@ -15,6 +15,8 @@ struct SettingsView: View {
     @State private var showUsedInsteadOfRemaining: Bool = false
     @State private var refreshOnPopoverOpen: Bool = false
     @State private var refreshIntervalMinutes: Double = 2
+    @State private var killswitchEnabled: Bool = false
+    @State private var killswitchThreshold: Double = 0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -95,13 +97,34 @@ struct SettingsView: View {
                             }
                     }
                 }
+
+                Section("Killswitch") {
+                    Toggle("Enable killswitch", isOn: $killswitchEnabled)
+                        .onChange(of: killswitchEnabled) { newValue in
+                            settingsManager.setKillswitchEnabled(newValue)
+                        }
+
+                    if killswitchEnabled {
+                        VStack(alignment: .leading) {
+                            Text("Trigger at: \(Int(killswitchThreshold))% remaining")
+                            Slider(value: $killswitchThreshold, in: 0...20, step: 1)
+                                .onChange(of: killswitchThreshold) { newValue in
+                                    settingsManager.setKillswitchThreshold(Int(newValue))
+                                }
+                        }
+
+                        Text("Kills Windsurf AI when daily or weekly quota drops to threshold")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
             .formStyle(.grouped)
             .padding()
 
             footer
         }
-        .frame(width: 360, height: 390)
+        .frame(width: 360, height: 480)
         .onAppear { loadSettings() }
     }
 
@@ -148,6 +171,8 @@ struct SettingsView: View {
         showUsedInsteadOfRemaining = settingsManager.settings.showUsedInsteadOfRemaining
         refreshOnPopoverOpen = settingsManager.settings.refreshOnPopoverOpen
         refreshIntervalMinutes = Double(settingsManager.settings.refreshIntervalMinutes)
+        killswitchEnabled = settingsManager.settings.killswitchEnabled
+        killswitchThreshold = Double(settingsManager.settings.killswitchThreshold)
     }
 
     private func resetToDefaults() {

@@ -1,4 +1,6 @@
 import Foundation
+import UserNotifications
+import AppKit
 
 // MARK: - Utilization helpers (pure, testable)
 
@@ -131,6 +133,7 @@ final class UsageService: ObservableObject {
                     self.error = resolution.errorMessage
                     self.isLoading = false
                     self.scheduleTimer(interval: resolution.nextInterval)
+                    self.checkKillswitch(snapshot: resolution.snapshot, settings: settings)
                 }
                 self.persistSnapshotForCache(resolution.snapshot)
             } catch {
@@ -296,6 +299,74 @@ final class UsageService: ObservableObject {
             try? data.write(to: URL(fileURLWithPath: debugLogPath), options: .atomic)
         }
         #endif
+    }
+
+    // MARK: - Killswitch
+
+    private var killswitchTriggeredThisSession = false
+
+    private func checkKillswitch(snapshot: UsageSnapshot, settings: AppSettings) {
+        guard settings.killswitchEnabled else { return }
+        guard !killswitchTriggeredThisSession else { return }
+        guard snapshot.source != .unavailable else { return }
+
+        let threshold = settings.killswitchThreshold
+        let dailyRemaining = snapshot.dailyQuotaRemainingPercent
+        let weeklyRemaining = snapshot.weeklyQuotaRemainingPercent
+
+        if dailyRemaining <= threshold || weeklyRemaining <= threshold {
+            debugLog("killswitch triggered: daily=\(dailyRemaining)% weekly=\(weeklyRemaining)% threshold=\(threshold)%")
+            killswitchTriggeredThisSession = true
+            triggerKillswitch(dailyRemaining: dailyRemaining, weeklyRemaining: weeklyRemaining, threshold: threshold)
+        }
+    }
+
+    private func triggerKillswitch(dailyRemaining: Int, weeklyRemaining: Int, threshold: Int) {
+        let quotaType = dailyRemaining <= threshold ? "Daily" : "Weekly"
+        let remaining = dailyRemaining <= threshold ? dailyRemaining : weeklyRemaining
+
+        let alert = NSAlert()
+        alert.messageText = "Windsurf AI Killswitch"
+        alert.informativeText = "\(quotaType) quota is at \(remaining)% (threshold: \(threshold)%).\n\nKill Windsurf AI process to prevent further usage?"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Kill AI")
+        alert.addButton(withTitle: "Cancel")
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            killLanguageServer()
+        } else {
+            killswitchTriggeredThisSession = false
+        }
+    }
+
+    private func killLanguageServer() {
+        debugLog("killing language server process")
+        let discovery = WindsurfProcessDiscovery()
+        do {
+            let info = try discovery.discover()
+            kill(info.processIdentifier, SIGTERM)
+            debugLog("language server killed: PID \(info.processIdentifier)")
+
+            sendKillNotification()
+        } catch {
+            debugLog("failed to kill language server: \(error.localizedDescription)")
+        }
+    }
+
+    private func sendKillNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "Windsurf AI Disabled"
+        content.body = "Language server process terminated due to quota limit."
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: "killswitch-\(UUID().uuidString)",
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request)
     }
 
 }
