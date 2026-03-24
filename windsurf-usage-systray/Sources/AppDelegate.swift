@@ -159,17 +159,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let dailyValue = showUsed ? snapshot.dailyQuotaUsedPercent : snapshot.dailyQuotaRemainingPercent
         let weeklyValue = showUsed ? snapshot.weeklyQuotaUsedPercent : snapshot.weeklyQuotaRemainingPercent
 
+        let dailyUsed = snapshot.dailyQuotaUsedPercent
+        let weeklyUsed = snapshot.weeklyQuotaUsedPercent
+        let dailyColor = quotaColor(forUsed: dailyUsed)
+        let weeklyColor = quotaColor(forUsed: weeklyUsed)
+
         if settingsManager.settings.compactDisplay {
             button.image = nil
-            button.title = "\(dailyValue)% • \(weeklyValue)%"
+            let attributedTitle = NSMutableAttributedString()
+            attributedTitle.append(NSAttributedString(
+                string: "\(dailyValue)%",
+                attributes: [.foregroundColor: dailyColor]
+            ))
+            attributedTitle.append(NSAttributedString(
+                string: " • ",
+                attributes: [.foregroundColor: NSColor.labelColor]
+            ))
+            attributedTitle.append(NSAttributedString(
+                string: "\(weeklyValue)%",
+                attributes: [.foregroundColor: weeklyColor]
+            ))
+            button.attributedTitle = attributedTitle
         } else {
             button.image = statusSymbolImage(named: "gauge.with.dots.needle.33percent")
-            button.title = "\(dailyValue)%"
+            let title = "\(dailyValue)%"
+            button.attributedTitle = NSAttributedString(
+                string: title,
+                attributes: [.foregroundColor: dailyColor]
+            )
         }
     }
 
-    private func quotaColor(forRemaining remaining: Int) -> NSColor {
-        let used = max(0, 100 - remaining)
+    private func quotaColor(forUsed used: Int) -> NSColor {
         let criticalThreshold = Int(settingsManager.settings.criticalThreshold)
         let warningThreshold = Int(settingsManager.settings.warningThreshold)
         if used >= criticalThreshold {

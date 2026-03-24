@@ -195,15 +195,19 @@ struct MenuBarView: View {
 
     private var usageIconName: String {
         let usage = usageService.currentUsage.dailyQuotaUsedPercent
-        if usage >= 90 { return "exclamationmark.triangle.fill" }
-        if usage >= 75 { return "gauge.with.dots.needle.100percent" }
+        let criticalThreshold = Int(settingsManager.settings.criticalThreshold)
+        let warningThreshold = Int(settingsManager.settings.warningThreshold)
+        if usage >= criticalThreshold { return "exclamationmark.triangle.fill" }
+        if usage >= warningThreshold { return "gauge.with.dots.needle.100percent" }
         return "gauge.with.dots.needle.33percent"
     }
 
     private var usageColor: Color {
         let usage = usageService.currentUsage.dailyQuotaUsedPercent
-        if usage >= 90 { return .red }
-        if usage >= 70 { return .orange }
+        let criticalThreshold = Int(settingsManager.settings.criticalThreshold)
+        let warningThreshold = Int(settingsManager.settings.warningThreshold)
+        if usage >= criticalThreshold { return .red }
+        if usage >= warningThreshold { return .orange }
         return .primary
     }
 
