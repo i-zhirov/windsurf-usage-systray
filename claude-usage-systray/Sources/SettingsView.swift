@@ -47,7 +47,7 @@ struct SettingsView: View {
                 }
 
                 Section("Menu Bar") {
-                    Toggle("Compact display (daily • weekly)", isOn: $compactDisplay)
+                    Toggle("Show both quotas (daily • weekly)", isOn: $compactDisplay)
                         .onChange(of: compactDisplay) { newValue in
                             settingsManager.setCompactDisplay(newValue)
                         }

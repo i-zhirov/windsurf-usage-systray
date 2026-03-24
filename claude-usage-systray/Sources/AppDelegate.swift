@@ -160,7 +160,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.title = "\(dailyValue)% • \(weeklyValue)%"
         } else {
             button.image = nil
-            button.title = "\(weeklyValue)%"
+            button.title = "\(dailyValue)%"
         }
     }
 
